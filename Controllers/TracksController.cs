@@ -1,25 +1,37 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SpotifyApi.Classes;
-using SpotifyApi.Enums;
+using SpotifyApi.Services;
 
 namespace SpotifyApi.Controllers
 {
     [ApiController]
     [Route("/")]
-    public class TracksController(HttpClient httpClient, IOptions<ServiceSettings> options) : ControllerBase
+    public class TracksController(
+        HttpClient httpClient,
+        IOptions<ServiceSettings> options,
+        IRequestValidatorService requestValidatorService,
+        IValidator<SearchTracksParams> searchTracksParamsValidator
+        ) : ControllerBase
     {
         private readonly HttpClient _httpClient = httpClient;
         private readonly ServiceSettings _serviceSettings = options.Value;
+        private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
+        private readonly IValidator<SearchTracksParams> _searchTracksParamsValidator
+         = searchTracksParamsValidator;
 
-        public async Task<IActionResult> SearchMusic(
-            [FromQuery] string term,
-            [FromQuery] Entity entity,
-            [FromQuery] int limit,
-            [FromQuery] int offset)
+        public async Task<IActionResult> SearchTracks(
+            [FromQuery] SearchTracksParams requestParams)
         {
-            Console.WriteLine(entity);
-            string url = $"{_serviceSettings.ItunesApi}/search?term={term}&entity={entity}&limit={limit}&offset={offset}";
+
+            var validationResult = _requestValidatorService.ValidateRequest(requestParams, _searchTracksParamsValidator);
+            if (validationResult is BadRequestObjectResult)
+            {
+                return validationResult;
+            }
+
+            string url = $"{_serviceSettings.ItunesApi}/search?term={requestParams.Term}&entity={requestParams.Entity}&limit={requestParams.Limit}&offset={requestParams.Offset}";
             var response = await _httpClient.GetAsync(url);
 
             if (!response.IsSuccessStatusCode)

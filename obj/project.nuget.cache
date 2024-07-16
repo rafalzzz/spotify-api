@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "+X5CMfcmGTI=",
+  "dgSpecHash": "VehGFuWyNR4=",
   "success": true,
-  "projectFilePath": "C:\\Users\\user\\SpotifyAPI\\SpotifyAPI.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "C:\\Users\\user\\SpotifyApi\\SpotifyApi.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\user\\.nuget\\packages\\fluentvalidation\\11.9.2\\fluentvalidation.11.9.2.nupkg.sha512"
+  ],
   "logs": []
 }
