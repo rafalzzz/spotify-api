@@ -10,13 +10,12 @@ builder.Services.Configure<ServiceSettings>(builder.Configuration.GetSection("Se
 
 builder.Services.AddHttpClient();
 builder.Services
+ .ConnectDatabase()
  .AddServices()
  .AddValidators()
  .AddControllers();
 
 builder.Services.AddTransient<IRequestValidatorService, RequestValidatorService>();
-
-
 
 var app = builder.Build();
 
