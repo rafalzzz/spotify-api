@@ -3,7 +3,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace SpotifyAPI.Migrations
+namespace SpotifyApi.Migrations
 {
     /// <inheritdoc />
     public partial class Init : Migration

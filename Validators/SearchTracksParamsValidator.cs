@@ -7,19 +7,19 @@ namespace SpotifyApi.Validators
     {
         public SearchTracksParamsValidator()
         {
-            RuleFor(x => x.Term)
+            RuleFor(requestParams => requestParams.Term)
             .NotEmpty()
             .WithMessage("Term is required.");
 
-            RuleFor(x => x.Entity)
+            RuleFor(requestParams => requestParams.Entity)
             .IsInEnum()
             .WithMessage("Entity is required.");
 
-            RuleFor(x => x.Limit)
+            RuleFor(requestParams => requestParams.Limit)
             .InclusiveBetween(1, 100)
             .WithMessage("Limit must be between 1 and 100.");
 
-            RuleFor(x => x.Offset)
+            RuleFor(requestParams => requestParams.Offset)
             .GreaterThanOrEqualTo(0)
             .WithMessage("Offset must be greater than or equal to 0.");
         }
