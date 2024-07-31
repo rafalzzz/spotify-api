@@ -7,7 +7,7 @@ using SpotifyApi.Entities;
 
 #nullable disable
 
-namespace SpotifyAPI.Migrations
+namespace SpotifyApi.Migrations
 {
     [DbContext(typeof(SpotifyDbContext))]
     partial class SpotifyDbContextModelSnapshot : ModelSnapshot

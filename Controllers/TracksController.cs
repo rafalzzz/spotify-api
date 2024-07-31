@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using SpotifyApi.Classes;
 using SpotifyApi.Services;
+using SpotifyApi.Variables;
 
 namespace SpotifyApi.Controllers
 {
     [ApiController]
-    [Route("/")]
+    [Route(ControllerRoutes.Tracks)]
     public class TracksController(
         HttpClient httpClient,
         IOptions<ServiceSettings> options,
@@ -22,7 +23,7 @@ namespace SpotifyApi.Controllers
          = searchTracksParamsValidator;
 
         public async Task<IActionResult> SearchTracks(
-            [FromQuery] SearchTracksParams requestParams)
+                                                    [FromQuery] SearchTracksParams requestParams)
         {
 
             var validationResult = _requestValidatorService.ValidateRequest(requestParams, _searchTracksParamsValidator);

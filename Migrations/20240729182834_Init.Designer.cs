@@ -8,7 +8,7 @@ using SpotifyApi.Entities;
 
 #nullable disable
 
-namespace SpotifyAPI.Migrations
+namespace SpotifyApi.Migrations
 {
     [DbContext(typeof(SpotifyDbContext))]
     [Migration("20240729182834_Init")]
