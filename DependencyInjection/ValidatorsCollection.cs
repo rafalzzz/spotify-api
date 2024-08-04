@@ -10,6 +10,7 @@ namespace SpotifyApi.DependencyInjection
         public static IServiceCollection AddValidators(this IServiceCollection services)
         {
             services.AddScoped<IValidator<RegisterUser>, RegisterUserValidator>();
+            services.AddScoped<IValidator<LoginUser>, LoginUserValidator>();
             services.AddScoped<IValidator<SearchTracksParams>, SearchTracksParamsValidator>();
 
             return services;
