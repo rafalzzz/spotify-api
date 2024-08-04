@@ -11,6 +11,7 @@ builder.Services.Configure<ServiceSettings>(builder.Configuration.GetSection("Se
 builder.Services.AddHttpClient();
 builder.Services
  .ConnectDatabase()
+ .AddConfigurations(builder.Configuration)
  .AddServices()
  .AddValidators()
  .AddControllers();

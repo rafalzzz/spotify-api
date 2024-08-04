@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Mvc;
 using SpotifyApi.Requests;
 using SpotifyApi.Classes;
 using SpotifyApi.Entities;
 using SpotifyApi.Enums;
+using SpotifyApi.Services;
 
 namespace SpotifyApi.Services
 {
@@ -10,15 +12,19 @@ namespace SpotifyApi.Services
         Task<bool> UserExists(string email, string nickname);
         int? CreateUser(RegisterUser userDto);
         LoginUserResult VerifyUser(LoginUser loginUserDto);
+        User? GetUserByLogin(string login);
+        Task<IActionResult> GenerateAndSendPasswordResetToken(User user);
     }
 
     public class UserService(
         SpotifyDbContext dbContext,
-        IPasswordHasher passwordHasher
+        IPasswordHasherService passwordHasherService,
+        IPasswordResetService passwordResetService
             ) : IUserService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
-        private readonly IPasswordHasher _passwordHasher = passwordHasher;
+        private readonly IPasswordHasherService _passwordHasherService = passwordHasherService;
+        private readonly IPasswordResetService _passwordResetService = passwordResetService;
 
         public async Task<bool> UserExists(string email, string nickname)
         {
@@ -27,7 +33,7 @@ namespace SpotifyApi.Services
 
         public int? CreateUser(RegisterUser registerUserDto)
         {
-            var passwordHash = _passwordHasher.Hash(registerUserDto.Password);
+            var passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
 
             User newUser = new()
             {
@@ -63,13 +69,13 @@ namespace SpotifyApi.Services
 
         private bool VerifyUserPassword(string userPassword, string password)
         {
-            return _passwordHasher.Verify(
+            return _passwordHasherService.Verify(
                     userPassword,
                     password
                 );
         }
 
-        private User? GetUserByLogin(string login)
+        public User? GetUserByLogin(string login)
         {
             bool isEmail = login.Contains("@");
 
@@ -102,6 +108,27 @@ namespace SpotifyApi.Services
             }
 
             return new LoginUserResult(null, user);
+        }
+
+        public void SavePasswordResetToken(string token, User user)
+        {
+            user.PasswordResetToken = token;
+            _dbContext.SaveChanges();
+        }
+
+        public async Task<IActionResult> GenerateAndSendPasswordResetToken(User user)
+        {
+            string? token = _passwordResetService.GeneratePasswordResetToken(user.Email);
+
+            if (token == null)
+            {
+                return new ObjectResult("An error occurred while generating the token") { StatusCode = 500 };
+            }
+
+            SavePasswordResetToken(token, user);
+            await _passwordResetService.SendPasswordResetToken(user.Email, token);
+
+            return new OkResult();
         }
     }
 }
