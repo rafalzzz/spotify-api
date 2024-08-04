@@ -7,7 +7,10 @@ namespace SpotifyApi.DependencyInjection
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
             services.AddTransient<IUserService, UserService>();
-            services.AddTransient<IPasswordHasher, PasswordHasher>();
+            services.AddTransient<IPasswordHasherService, PasswordHasherService>();
+            services.AddTransient<IPasswordResetService, PasswordResetService>();
+            services.AddTransient<IJwtService, JwtService>();
+            services.AddTransient<IEmailService, EmailService>();
             services.AddTransient<IRequestValidatorService, RequestValidatorService>();
 
             return services;

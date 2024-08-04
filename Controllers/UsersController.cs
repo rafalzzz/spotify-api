@@ -5,6 +5,7 @@ using SpotifyApi.Requests;
 using SpotifyApi.Services;
 using SpotifyApi.Enums;
 using SpotifyApi.Classes;
+using SpotifyApi.Entities;
 
 namespace SpotifyApi.Controllers
 {
@@ -14,12 +15,14 @@ namespace SpotifyApi.Controllers
         IRequestValidatorService requestValidatorService,
         IValidator<RegisterUser> registerUserValidator,
         IValidator<LoginUser> loginUserValidator,
+        IValidator<PasswordReset> passwordResetValidator,
         IUserService userService
     ) : ControllerBase
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
         private readonly IValidator<RegisterUser> _registerUserValidator = registerUserValidator;
         private readonly IValidator<LoginUser> _loginUserValidator = loginUserValidator;
+        private readonly IValidator<PasswordReset> _passwordResetValidator = passwordResetValidator;
         private readonly IUserService _userService = userService;
 
         [HttpPost]
@@ -68,6 +71,27 @@ namespace SpotifyApi.Controllers
             {
                 return BadRequest("Incorrect password");
             }
+
+            return Ok();
+        }
+
+        [HttpPost("password-reset")]
+        public async Task<IActionResult> PasswordReset([FromBody] PasswordReset passwordResetDto)
+        {
+            var validationResult = _requestValidatorService.ValidateRequest(passwordResetDto, _passwordResetValidator);
+            if (validationResult is BadRequestObjectResult)
+            {
+                return validationResult;
+            }
+
+            User? user = _userService.GetUserByLogin(passwordResetDto.Login);
+
+            if (user is null)
+            {
+                return BadRequest("Account with the provided login doest not exist");
+            }
+
+            await _userService.GenerateAndSendPasswordResetToken(user);
 
             return Ok();
         }

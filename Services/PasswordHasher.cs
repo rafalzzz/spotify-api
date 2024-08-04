@@ -2,13 +2,13 @@ using System.Security.Cryptography;
 
 namespace SpotifyApi.Services
 {
-    public interface IPasswordHasher
+    public interface IPasswordHasherService
     {
         string Hash(string password);
         bool Verify(string passwordHash, string passwordInput);
     }
 
-    public class PasswordHasher : IPasswordHasher
+    public class PasswordHasherService : IPasswordHasherService
     {
         private const int SaltSize = 128 / 8;
         private const int KeySize = 256 / 8;

@@ -69,5 +69,12 @@ namespace SpotifyApi.Extensions
             .NotNull()
             .WithMessage("{PropertyName} is required");
         }
+
+        public static void Login<T>(this IRuleBuilder<T, string> ruleBuilder)
+        {
+            ruleBuilder
+            .NotEmpty()
+            .WithMessage("Login is required");
+        }
     }
 }
