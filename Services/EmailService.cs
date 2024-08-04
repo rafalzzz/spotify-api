@@ -20,11 +20,11 @@ namespace SpotifyApi.Services
         {
 
             bool useUsl = true;
-            string senderName = Environment.GetEnvironmentVariable(EnvironmentVariables.SenderName);
-            string senderEmail = Environment.GetEnvironmentVariable(EnvironmentVariables.SenderEmail);
-            string senderEmailPassword = Environment.GetEnvironmentVariable(EnvironmentVariables.SenderEmailPassword);
-            string smtpServer = Environment.GetEnvironmentVariable(EnvironmentVariables.SmtpServer);
-            string smtpPort = Environment.GetEnvironmentVariable(EnvironmentVariables.SmtpPort);
+            string? senderName = Environment.GetEnvironmentVariable(EnvironmentVariables.SenderName);
+            string? senderEmail = Environment.GetEnvironmentVariable(EnvironmentVariables.SenderEmail);
+            string? senderEmailPassword = Environment.GetEnvironmentVariable(EnvironmentVariables.SenderEmailPassword);
+            string? smtpServer = Environment.GetEnvironmentVariable(EnvironmentVariables.SmtpServer);
+            string? smtpPort = Environment.GetEnvironmentVariable(EnvironmentVariables.SmtpPort);
 
             var emailMessage = new MimeMessage();
 

@@ -118,7 +118,7 @@ namespace SpotifyApi.Services
 
         public async Task<IActionResult> GenerateAndSendPasswordResetToken(User user)
         {
-            string token = _passwordResetService.GeneratePasswordResetToken(user.Email);
+            string? token = _passwordResetService.GeneratePasswordResetToken(user.Email);
 
             if (token == null)
             {
