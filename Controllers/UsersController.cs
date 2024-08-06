@@ -16,14 +16,18 @@ namespace SpotifyApi.Controllers
         IValidator<RegisterUser> registerUserValidator,
         IValidator<LoginUser> loginUserValidator,
         IValidator<PasswordReset> passwordResetValidator,
-        IUserService userService
+        IValidator<PasswordResetComplete> passwordResetCompleteValidator,
+        IUserService userService,
+        IPasswordResetCompleteService passwordResetCompleteService
     ) : ControllerBase
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
         private readonly IValidator<RegisterUser> _registerUserValidator = registerUserValidator;
         private readonly IValidator<LoginUser> _loginUserValidator = loginUserValidator;
         private readonly IValidator<PasswordReset> _passwordResetValidator = passwordResetValidator;
+        private readonly IValidator<PasswordResetComplete> _passwordResetCompleteValidator = passwordResetCompleteValidator;
         private readonly IUserService _userService = userService;
+        private readonly IPasswordResetCompleteService _passwordResetCompleteService = passwordResetCompleteService;
 
         [HttpPost]
         public async Task<ActionResult> Register(
@@ -94,6 +98,32 @@ namespace SpotifyApi.Controllers
             await _userService.GenerateAndSendPasswordResetToken(user);
 
             return Ok();
+        }
+
+        [HttpPut("password-reset-complete/{token}")]
+        public ActionResult PasswordResetComplete([FromBody] PasswordResetComplete passwordResetCompleteDto, [FromRoute] string token)
+        {
+            var validationResult = _requestValidatorService.ValidateRequest(passwordResetCompleteDto, _passwordResetCompleteValidator);
+            if (validationResult is BadRequestObjectResult badRequest)
+            {
+                return badRequest;
+            }
+
+            (string? validationError, string? email) = _passwordResetCompleteService.ValidateToken(token);
+
+            if (validationError != null || email == null)
+            {
+                return Unauthorized(validationError);
+            }
+
+            User? user = _userService.CheckUserPasswordResetToken(email, token);
+            if (user == null)
+            {
+                return BadRequest("Invalid token");
+            }
+
+            _userService.ChangeUserPassword(user, passwordResetCompleteDto.Password);
+            return Ok("Password has changed successfully");
         }
     }
 }

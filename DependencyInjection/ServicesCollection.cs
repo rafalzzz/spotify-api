@@ -11,6 +11,7 @@ namespace SpotifyApi.DependencyInjection
             services.AddTransient<IPasswordResetService, PasswordResetService>();
             services.AddTransient<IJwtService, JwtService>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddTransient<IPasswordResetCompleteService, PasswordResetCompleteService>();
             services.AddTransient<IRequestValidatorService, RequestValidatorService>();
 
             return services;
