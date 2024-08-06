@@ -8,6 +8,7 @@ namespace SpotifyApi.Services
     public interface IJwtService
     {
         string GenerateToken(List<Claim> claims, string issuer, string audience, string secretKey, DateTime expires);
+        SigningCredentials GetSigningCredentials(string secretKey);
     }
 
     public class JwtService() : IJwtService
