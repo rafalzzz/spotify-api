@@ -26,7 +26,7 @@ namespace SpotifyApi.Controllers
                                                     [FromQuery] SearchTracksParams requestParams)
         {
 
-            var validationResult = _requestValidatorService.ValidateRequest(requestParams, _searchTracksParamsValidator);
+            /* var validationResult = _requestValidatorService.ValidateRequest(requestParams, _searchTracksParamsValidator);
             if (validationResult is BadRequestObjectResult)
             {
                 return validationResult;
@@ -40,8 +40,8 @@ namespace SpotifyApi.Controllers
                 return StatusCode((int)response.StatusCode, "Error calling iTunes API");
             }
 
-            var content = await response.Content.ReadAsStringAsync();
-            return Ok(content);
+            var content = await response.Content.ReadAsStringAsync(); */
+            return Ok();
         }
     }
 }

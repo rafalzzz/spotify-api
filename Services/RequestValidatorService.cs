@@ -1,45 +1,34 @@
-using FluentValidation.Results;
 using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
+using FluentValidation.Results;
 using SpotifyApi.Classes;
+using System.Linq;
 
 namespace SpotifyApi.Services
 {
     public interface IRequestValidatorService
     {
-        ActionResult ValidateRequest<T>(T request, IValidator<T> validator);
+        Result<T> ValidateRequest<T>(T request, IValidator<T> validator);
     }
 
     public class RequestValidatorService : IRequestValidatorService
     {
-        private IEnumerable<ValidationError>? GetValidationErrorsResult(ValidationResult validationResult)
+        public Result<T> ValidateRequest<T>(T request, IValidator<T> validator)
         {
+            ValidationResult validationResult = validator.Validate(request);
+
             if (!validationResult.IsValid)
             {
-                var errorList = validationResult.Errors
-                .Select(error => new ValidationError
-                {
-                    Property = error.PropertyName,
-                    ErrorMessage = error.ErrorMessage
-                });
+                var errors = validationResult.Errors
+                    .Select(e => new
+                    {
+                        field = e.PropertyName,
+                        error = e.ErrorMessage
+                    }).ToArray();
 
-                return errorList;
+                return Result<T>.Failure(new Error(ErrorType.Validation, errors));
             }
 
-            return null;
-        }
-
-        public ActionResult ValidateRequest<T>(T request, IValidator<T> validator)
-        {
-            var validationResults = validator.Validate(request);
-            IEnumerable<ValidationError>? validationResultErrors = GetValidationErrorsResult(validationResults);
-
-            if (validationResultErrors != null)
-            {
-                return new BadRequestObjectResult(validationResultErrors);
-            }
-
-            return new OkResult();
+            return Result<T>.Success(request);
         }
     }
 }

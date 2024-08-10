@@ -3,7 +3,6 @@ using SpotifyApi.Requests;
 using SpotifyApi.Classes;
 using SpotifyApi.Entities;
 using SpotifyApi.Enums;
-using SpotifyApi.Services;
 
 namespace SpotifyApi.Services
 {
