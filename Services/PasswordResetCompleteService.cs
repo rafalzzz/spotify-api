@@ -14,22 +14,15 @@ namespace SpotifyApi.Services
         (string? validationError, string? email) ValidateToken(string token);
     }
 
-    public class PasswordResetCompleteService : IPasswordResetCompleteService
+    public class PasswordResetCompleteService(
+        IJwtService jwtService,
+        IOptions<PasswordResetSettings> passwordResetSettings,
+        IEmailService emailService
+            ) : IPasswordResetCompleteService
     {
-        private readonly IJwtService _jwtService;
-        private readonly PasswordResetSettings _passwordResetSettings;
-        private readonly IEmailService _emailService;
-
-        public PasswordResetCompleteService(
-            IJwtService jwtService,
-            IOptions<PasswordResetSettings> passwordResetSettings,
-            IEmailService emailService
-            )
-        {
-            _jwtService = jwtService;
-            _passwordResetSettings = passwordResetSettings.Value;
-            _emailService = emailService;
-        }
+        private readonly IJwtService _jwtService = jwtService;
+        private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
+        private readonly IEmailService _emailService = emailService;
 
         private static string? GetPasswordResetSecretKey()
         {

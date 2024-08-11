@@ -1,7 +1,6 @@
 using FluentValidation;
 using FluentValidation.Results;
-using SpotifyApi.Classes;
-using System.Linq;
+using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {

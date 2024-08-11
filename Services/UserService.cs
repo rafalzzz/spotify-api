@@ -78,7 +78,7 @@ namespace SpotifyApi.Services
 
         public User? GetUserByLogin(string login)
         {
-            bool isEmail = login.Contains("@");
+            bool isEmail = login.Contains('@');
 
             if (isEmail)
             {
