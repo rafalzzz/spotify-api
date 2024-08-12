@@ -72,7 +72,8 @@ namespace SpotifyApi.Services
         {
             try
             {
-                var user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
+                User? user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
+
                 return Result<User?>.Success(user);
             }
             catch (Exception ex)
@@ -87,7 +88,8 @@ namespace SpotifyApi.Services
         {
             try
             {
-                var user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
+                User? user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
+
                 return Result<User?>.Success(user);
             }
             catch (Exception ex)
@@ -115,9 +117,14 @@ namespace SpotifyApi.Services
 
         public Result<User> GetUserByLogin(string login)
         {
-            var userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
+            Result<User?> userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
 
-            if (!userResult.IsSuccess || userResult.Value == null)
+            if (userResult.IsSuccess || userResult.Value != null)
+            {
+                return Result<User>.Success(userResult.Value!);
+            }
+
+            if (userResult.IsSuccess || userResult.Value == null)
             {
                 return Result<User>.Failure(Error.WrongLogin);
             }
@@ -127,14 +134,14 @@ namespace SpotifyApi.Services
 
         public Result<User> VerifyUser(LoginUser loginUserDto)
         {
-            var userResult = GetUserByLogin(loginUserDto.Login);
+            Result<User> userResult = GetUserByLogin(loginUserDto.Login);
 
             if (!userResult.IsSuccess)
             {
                 return Result<User>.Failure(userResult.Error);
             }
 
-            var passwordResult = VerifyUserPassword(userResult.Value.Password, loginUserDto.Password);
+            Result<bool> passwordResult = VerifyUserPassword(userResult.Value.Password, loginUserDto.Password);
 
             if (!passwordResult.IsSuccess)
             {
