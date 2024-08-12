@@ -1,57 +1,71 @@
-using Microsoft.AspNetCore.Mvc;
-using SpotifyApi.Requests;
-using SpotifyApi.Classes;
 using SpotifyApi.Entities;
-using SpotifyApi.Enums;
+using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {
     public interface IUserService
     {
-        Task<bool> UserExists(string email, string nickname);
-        int? CreateUser(RegisterUser userDto);
+        Task<Result<bool>> UserExists(string email, string nickname);
+        Result<User> CreateUser(RegisterUser registerUserDto);
         Result<User> VerifyUser(LoginUser loginUserDto);
         Result<User> GetUserByLogin(string login);
     }
 
     public class UserService(
         SpotifyDbContext dbContext,
-        IPasswordHasherService passwordHasherService,
-        IPasswordResetService passwordResetService
-            ) : IUserService
+        IPasswordHasherService passwordHasherService
+    ) : IUserService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
         private readonly IPasswordHasherService _passwordHasherService = passwordHasherService;
-        private readonly IPasswordResetService _passwordResetService = passwordResetService;
 
-        public async Task<bool> UserExists(string email, string nickname)
+        public async Task<Result<bool>> UserExists(string email, string nickname)
         {
-            return await _dbContext.UserExists(email, nickname);
+            try
+            {
+                bool exists = await _dbContext.UserExists(email, nickname);
+                return Result<bool>.Success(exists);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(
+                    new Error(ErrorType.Database, "Database connection error: " + ex.Message)
+                );
+            }
         }
 
-        public int? CreateUser(RegisterUser registerUserDto)
+        public Result<User> CreateUser(RegisterUser registerUserDto)
         {
-            var passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
-
-            User newUser = new()
+            try
             {
-                Email = registerUserDto.Email,
-                Password = passwordHash,
-                Nickname = registerUserDto.Nickname,
-                DateOfBirth = registerUserDto.DateOfBirth,
-                Gender = registerUserDto.Gender,
-                Offers = registerUserDto.Offers,
-                ShareInformation = registerUserDto.ShareInformation,
-                Terms = registerUserDto.Terms,
-                RefreshToken = "",
-                PasswordResetToken = "",
-            };
+                var passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
 
-            _dbContext.Users.Add(newUser);
-            _dbContext.SaveChanges();
+                User newUser = new()
+                {
+                    Email = registerUserDto.Email,
+                    Password = passwordHash,
+                    Nickname = registerUserDto.Nickname,
+                    DateOfBirth = registerUserDto.DateOfBirth,
+                    Gender = registerUserDto.Gender,
+                    Offers = registerUserDto.Offers,
+                    ShareInformation = registerUserDto.ShareInformation,
+                    Terms = registerUserDto.Terms,
+                    RefreshToken = "",
+                    PasswordResetToken = "",
+                };
 
-            return newUser.Id;
+                _dbContext.Users.Add(newUser);
+                _dbContext.SaveChanges();
+
+                return Result<User>.Success(newUser);
+            }
+            catch (Exception ex)
+            {
+                return Result<User>.Failure(
+                    new Error(ErrorType.Database, "Database connection error: " + ex.Message)
+                );
+            }
         }
 
         private Result<User?> GetUserByEmail(string email)
@@ -63,7 +77,9 @@ namespace SpotifyApi.Services
             }
             catch (Exception ex)
             {
-                return Result<User?>.Failure(new Error(ErrorType.Database, "Database connection error: " + ex.Message));
+                return Result<User?>.Failure(
+                    new Error(ErrorType.Database, "Database connection error: " + ex.Message)
+                );
             }
         }
 
@@ -76,7 +92,9 @@ namespace SpotifyApi.Services
             }
             catch (Exception ex)
             {
-                return Result<User?>.Failure(new Error(ErrorType.Database, "Database connection error: " + ex.Message));
+                return Result<User?>.Failure(
+                    new Error(ErrorType.Database, "Database connection error: " + ex.Message)
+                );
             }
         }
 
@@ -89,7 +107,9 @@ namespace SpotifyApi.Services
             }
             catch (Exception ex)
             {
-                return Result<bool>.Failure(new Error(ErrorType.PasswordHashing, "Password hashing error: " + ex.Message));
+                return Result<bool>.Failure(
+                    new Error(ErrorType.PasswordHashing, "Password hashing error: " + ex.Message)
+                );
             }
         }
 

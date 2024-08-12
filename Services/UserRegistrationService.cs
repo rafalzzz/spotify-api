@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
+using SpotifyApi.Entities;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
@@ -9,12 +10,15 @@ namespace SpotifyApi.Services
     {
         Result<RegisterUser> ValidateRegistration(RegisterUser registerUserDto);
         Task<Result<RegisterUser>> CheckIfUserExists(RegisterUser registerUserDto);
-        Result<RegisterUser> CreateUser(RegisterUser registerUserDto);
+        Result<User> CreateUser(RegisterUser registerUserDto);
         ActionResult HandleRegistrationError(Error err);
     }
-    public class UserRegistrationService(IRequestValidatorService requestValidatorService,
-                                   IValidator<RegisterUser> registerUserValidator,
-                                   IUserService userService) : IUserRegistrationService
+
+    public class UserRegistrationService(
+        IRequestValidatorService requestValidatorService,
+        IValidator<RegisterUser> registerUserValidator,
+        IUserService userService
+    ) : IUserRegistrationService
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
         private readonly IValidator<RegisterUser> _registerUserValidator = registerUserValidator;
@@ -22,24 +26,41 @@ namespace SpotifyApi.Services
 
         public Result<RegisterUser> ValidateRegistration(RegisterUser registerUserDto)
         {
-            var validationResult = _requestValidatorService.ValidateRequest(registerUserDto, _registerUserValidator);
+            Result<RegisterUser> validationResult = _requestValidatorService.ValidateRequest(
+                registerUserDto,
+                _registerUserValidator
+            );
 
             return validationResult.IsSuccess ? Result<RegisterUser>.Success(registerUserDto) :
-                                               Result<RegisterUser>.Failure(new Error(ErrorType.Validation, validationResult.Error.Description));
+                Result<RegisterUser>.Failure(validationResult.Error);
         }
 
         public async Task<Result<RegisterUser>> CheckIfUserExists(RegisterUser registerUserDto)
         {
-            bool exists = await _userService.UserExists(registerUserDto.Email, registerUserDto.Nickname);
-            return !exists ? Result<RegisterUser>.Success(registerUserDto) :
-                             Result<RegisterUser>.Failure(Error.UserAlreadyExist);
+            Result<bool> userExistsResult = await _userService.UserExists(
+                registerUserDto.Email,
+                registerUserDto.Nickname
+            );
+
+            if (userExistsResult.IsSuccess && userExistsResult.Value)
+            {
+                return Result<RegisterUser>.Success(registerUserDto);
+            }
+
+            if (userExistsResult.IsSuccess && !userExistsResult.Value)
+            {
+                return Result<RegisterUser>.Failure(Error.UserAlreadyExist);
+            }
+
+            return Result<RegisterUser>.Failure(userExistsResult.Error);
         }
 
-        public Result<RegisterUser> CreateUser(RegisterUser registerUserDto)
+        public Result<User> CreateUser(RegisterUser registerUserDto)
         {
-            var id = _userService.CreateUser(registerUserDto);
-            return id != null ? Result<RegisterUser>.Success(registerUserDto) :
-                                Result<RegisterUser>.Failure(Error.CreateUserFailed);
+            Result<User> createUserResult = _userService.CreateUser(registerUserDto);
+
+            return createUserResult.IsSuccess ? Result<User>.Success(createUserResult.Value) :
+                Result<User>.Failure(createUserResult.Error);
         }
 
         public ActionResult HandleRegistrationError(Error err)

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
+using SpotifyApi.Entities;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
@@ -11,11 +12,12 @@ namespace SpotifyApi.Services
         Result<LoginUser> CheckLoginAndPassword(LoginUser loginUserDto);
         ActionResult HandleLoginError(Error err);
     }
+
     public class UserLoginService(
         IRequestValidatorService requestValidatorService,
         IValidator<LoginUser> loginUserValidator,
         IUserService userService
-        ) : IUserLoginService
+    ) : IUserLoginService
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
         private readonly IValidator<LoginUser> _loginUserValidator = loginUserValidator;
@@ -23,18 +25,20 @@ namespace SpotifyApi.Services
 
         public Result<LoginUser> ValidateLogin(LoginUser loginUserDto)
         {
-            var validationResult = _requestValidatorService.ValidateRequest(loginUserDto, _loginUserValidator);
+            Result<LoginUser> validationResult = _requestValidatorService.ValidateRequest(loginUserDto, _loginUserValidator);
 
             return validationResult.IsSuccess ? Result<LoginUser>.Success(loginUserDto) :
-                                               Result<LoginUser>.Failure(new Error(ErrorType.Validation, validationResult.Error.Description));
+                Result<LoginUser>.Failure(
+                    new Error(ErrorType.Validation, validationResult.Error.Description)
+                );
         }
 
         public Result<LoginUser> CheckLoginAndPassword(LoginUser loginUserDto)
         {
-            var result = _userService.VerifyUser(loginUserDto);
+            Result<User> verifyUserResult = _userService.VerifyUser(loginUserDto);
 
-            return result.IsSuccess ? Result<LoginUser>.Success(loginUserDto) :
-            Result<LoginUser>.Failure(new Error(result.Error.Type, result.Error.Description));
+            return verifyUserResult.IsSuccess ? Result<LoginUser>.Success(loginUserDto) :
+                Result<LoginUser>.Failure(verifyUserResult.Error);
         }
 
         public ActionResult HandleLoginError(Error err)

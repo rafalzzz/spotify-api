@@ -1,10 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using SpotifyApi.Variables;
 using SpotifyApi.Classes;
+using SpotifyApi.Variables;
 
 namespace SpotifyApi.Services
 {
@@ -18,7 +16,7 @@ namespace SpotifyApi.Services
         IJwtService jwtService,
         IOptions<PasswordResetSettings> passwordResetSettings,
         IEmailService emailService
-            ) : IPasswordResetService
+    ) : IPasswordResetService
     {
         private readonly IJwtService _jwtService = jwtService;
         private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
@@ -26,11 +24,11 @@ namespace SpotifyApi.Services
 
         private static List<Claim> GetPasswordResetTokenClaims(string userEmail)
         {
-            List<Claim> claims = new List<Claim>
-            {
+            List<Claim> claims =
+            [
                 new Claim(ClaimTypes.Email, userEmail),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+            ];
 
             return claims;
         }

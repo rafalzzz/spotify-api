@@ -16,13 +16,11 @@ namespace SpotifyApi.Services
 
     public class PasswordResetCompleteService(
         IJwtService jwtService,
-        IOptions<PasswordResetSettings> passwordResetSettings,
-        IEmailService emailService
-            ) : IPasswordResetCompleteService
+        IOptions<PasswordResetSettings> passwordResetSettings
+    ) : IPasswordResetCompleteService
     {
         private readonly IJwtService _jwtService = jwtService;
         private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
-        private readonly IEmailService _emailService = emailService;
 
         private static string? GetPasswordResetSecretKey()
         {
