@@ -9,7 +9,7 @@ namespace SpotifyApi.Services
     {
         Result<RegisterUser> ValidateRegistration(RegisterUser registerUserDto);
         Task<Result<RegisterUser>> CheckIfUserExists(RegisterUser registerUserDto);
-        Result<int> CreateUser(RegisterUser registerUserDto);
+        Result<RegisterUser> CreateUser(RegisterUser registerUserDto);
         ActionResult HandleRegistrationError(Error err);
     }
     public class UserRegistrationService(IRequestValidatorService requestValidatorService,
@@ -35,11 +35,11 @@ namespace SpotifyApi.Services
                              Result<RegisterUser>.Failure(Error.UserAlreadyExist);
         }
 
-        public Result<int> CreateUser(RegisterUser registerUserDto)
+        public Result<RegisterUser> CreateUser(RegisterUser registerUserDto)
         {
             var id = _userService.CreateUser(registerUserDto);
-            return id != null ? Result<int>.Success(id.Value) :
-                                Result<int>.Failure(Error.CreateUserFailed);
+            return id != null ? Result<RegisterUser>.Success(registerUserDto) :
+                                Result<RegisterUser>.Failure(Error.CreateUserFailed);
         }
 
         public ActionResult HandleRegistrationError(Error err)
@@ -49,7 +49,10 @@ namespace SpotifyApi.Services
                 ErrorType.Validation => new BadRequestObjectResult(err),
                 ErrorType.UserAlreadyExist => new ConflictObjectResult(err.Description),
                 ErrorType.Failure => new ObjectResult(err.Description) { StatusCode = StatusCodes.Status500InternalServerError },
-                _ => new StatusCodeResult(StatusCodes.Status500InternalServerError)
+                _ => new ObjectResult("An unexpected error occurred: " + err.Description)
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                }
             };
         }
     }

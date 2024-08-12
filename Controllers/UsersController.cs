@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using FluentValidation;
 using SpotifyApi.Variables;
 using SpotifyApi.Requests;
 using SpotifyApi.Services;
@@ -10,14 +9,12 @@ namespace SpotifyApi.Controllers
     [ApiController]
     [Route(ControllerRoutes.User)]
     public class UserController(
-        IRequestValidatorService requestValidatorService,
-        IValidator<RegisterUser> registerUserValidator,
-        IUserRegistrationService userRegistrationService
+        IUserRegistrationService userRegistrationService,
+        IUserLoginService userLoginService
     ) : ControllerBase
     {
-        private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
-        private readonly IValidator<RegisterUser> _registerUserValidator = registerUserValidator;
         private readonly IUserRegistrationService _userRegistrationService = userRegistrationService;
+        private readonly IUserLoginService _userLoginService = userLoginService;
 
         [HttpPost]
         public async Task<ActionResult> Register([FromBody] RegisterUser registerUserDto)
@@ -29,6 +26,17 @@ namespace SpotifyApi.Controllers
                     _ => Ok(),
                     _userRegistrationService.HandleRegistrationError
                 );
+        }
+
+        [HttpPost("login")]
+        public ActionResult Login([FromBody] LoginUser loginUserDto)
+        {
+            return _userLoginService.ValidateLogin(loginUserDto)
+            .Bind(_userLoginService.CheckLoginAndPassword)
+            .Match(
+                _ => Ok(),
+                _userLoginService.HandleLoginError
+            );
         }
     }
 }

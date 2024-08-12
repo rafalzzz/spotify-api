@@ -3,6 +3,7 @@ using SpotifyApi.Requests;
 using SpotifyApi.Classes;
 using SpotifyApi.Entities;
 using SpotifyApi.Enums;
+using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {
@@ -10,11 +11,8 @@ namespace SpotifyApi.Services
     {
         Task<bool> UserExists(string email, string nickname);
         int? CreateUser(RegisterUser userDto);
-        LoginUserResult VerifyUser(LoginUser loginUserDto);
-        User? GetUserByLogin(string login);
-        Task<IActionResult> GenerateAndSendPasswordResetToken(User user);
-        User? CheckUserPasswordResetToken(string email, string token);
-        bool ChangeUserPassword(User user, string password);
+        Result<User> VerifyUser(LoginUser loginUserDto);
+        Result<User> GetUserByLogin(string login);
     }
 
     public class UserService(
@@ -56,102 +54,79 @@ namespace SpotifyApi.Services
             return newUser.Id;
         }
 
-        private User? GetUserByEmail(string email)
+        private Result<User?> GetUserByEmail(string email)
         {
-            var user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
-            return user;
-        }
-
-        private User? GetUserByNickname(string nickname)
-        {
-            var user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
-            return user;
-        }
-
-        private bool VerifyUserPassword(string userPassword, string password)
-        {
-            return _passwordHasherService.Verify(
-                    userPassword,
-                    password
-                );
-        }
-
-        public User? GetUserByLogin(string login)
-        {
-            bool isEmail = login.Contains('@');
-
-            if (isEmail)
+            try
             {
-                return GetUserByEmail(login);
+                var user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
+                return Result<User?>.Success(user);
+            }
+            catch (Exception ex)
+            {
+                return Result<User?>.Failure(new Error(ErrorType.Database, "Database connection error: " + ex.Message));
+            }
+        }
+
+        private Result<User?> GetUserByNickname(string nickname)
+        {
+            try
+            {
+                var user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
+                return Result<User?>.Success(user);
+            }
+            catch (Exception ex)
+            {
+                return Result<User?>.Failure(new Error(ErrorType.Database, "Database connection error: " + ex.Message));
+            }
+        }
+
+        private Result<bool> VerifyUserPassword(string userPassword, string password)
+        {
+            try
+            {
+                bool result = _passwordHasherService.Verify(userPassword, password);
+                return Result<bool>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(new Error(ErrorType.PasswordHashing, "Password hashing error: " + ex.Message));
+            }
+        }
+
+        public Result<User> GetUserByLogin(string login)
+        {
+            var userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
+
+            if (!userResult.IsSuccess || userResult.Value == null)
+            {
+                return Result<User>.Failure(Error.WrongLogin);
             }
 
-            return GetUserByNickname(login);
-
+            return Result<User>.Success(userResult.Value);
         }
 
-        public LoginUserResult VerifyUser(LoginUser loginUserDto)
+        public Result<User> VerifyUser(LoginUser loginUserDto)
         {
-            User? user = GetUserByLogin(loginUserDto.Login);
+            var userResult = GetUserByLogin(loginUserDto.Login);
 
-            if (user is null)
+            if (!userResult.IsSuccess)
             {
-                return new LoginUserResult(LoginUserError.WrongLogin, null);
+                return Result<User>.Failure(userResult.Error);
             }
 
-            bool isPasswordCorrect = VerifyUserPassword(
-                    user.Password,
-                    loginUserDto.Password
-                );
+            var passwordResult = VerifyUserPassword(userResult.Value.Password, loginUserDto.Password);
 
-            if (!isPasswordCorrect)
+            if (!passwordResult.IsSuccess)
             {
-                return new LoginUserResult(LoginUserError.WrongPassword, null);
+                return Result<User>.Failure(passwordResult.Error);
             }
 
-            return new LoginUserResult(null, user);
-        }
-
-        public void SavePasswordResetToken(string token, User user)
-        {
-            user.PasswordResetToken = token;
-            _dbContext.SaveChanges();
-        }
-
-        public async Task<IActionResult> GenerateAndSendPasswordResetToken(User user)
-        {
-            string? token = _passwordResetService.GeneratePasswordResetToken(user.Email);
-
-            if (token == null)
+            if (!passwordResult.Value)
             {
-                return new ObjectResult("An error occurred while generating the token") { StatusCode = 500 };
+                return Result<User>.Failure(Error.WrongPassword);
             }
 
-            SavePasswordResetToken(token, user);
-            await _passwordResetService.SendPasswordResetToken(user.Email, token);
-
-            return new OkResult();
-        }
-
-        public User? CheckUserPasswordResetToken(string email, string token)
-        {
-            User? user = GetUserByEmail(email);
-
-            if (user != null && user.PasswordResetToken == token)
-            {
-                return user;
-            }
-
-            return null;
-        }
-
-        public bool ChangeUserPassword(User user, string password)
-        {
-            var passwordHash = _passwordHasherService.Hash(password);
-            user.Password = passwordHash;
-            user.PasswordResetToken = "";
-            _dbContext.SaveChanges();
-
-            return true;
+            return Result<User>.Success(userResult.Value);
         }
     }
 }
