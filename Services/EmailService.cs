@@ -26,7 +26,7 @@ namespace SpotifyApi.Services
             string? smtpServer = Environment.GetEnvironmentVariable(EnvironmentVariables.SmtpServer);
             string? smtpPort = Environment.GetEnvironmentVariable(EnvironmentVariables.SmtpPort);
 
-            var emailMessage = new MimeMessage();
+            MimeMessage? emailMessage = new();
 
             emailMessage.From.Add(new MailboxAddress(senderName, senderEmail));
             emailMessage.To.Add(new MailboxAddress("", email));
@@ -36,7 +36,7 @@ namespace SpotifyApi.Services
                 Text = emailContent
             };
 
-            using var client = new SmtpClient();
+            using SmtpClient? client = new();
             await client.ConnectAsync(smtpServer, int.Parse(smtpPort), useUsl);
             await client.AuthenticateAsync(senderEmail, senderEmailPassword);
             await client.SendAsync(emailMessage);

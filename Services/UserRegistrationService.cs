@@ -59,7 +59,8 @@ namespace SpotifyApi.Services
         {
             Result<User> createUserResult = _userService.CreateUser(registerUserDto);
 
-            return createUserResult.IsSuccess ? Result<User>.Success(createUserResult.Value) :
+            return createUserResult.IsSuccess ?
+                Result<User>.Success(createUserResult.Value) :
                 Result<User>.Failure(createUserResult.Error);
         }
 

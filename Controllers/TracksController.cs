@@ -22,8 +22,7 @@ namespace SpotifyApi.Controllers
         private readonly IValidator<SearchTracksParams> _searchTracksParamsValidator
          = searchTracksParamsValidator;
 
-        public async Task<IActionResult> SearchTracks(
-                                                    [FromQuery] SearchTracksParams requestParams)
+        public async Task<IActionResult> SearchTracks([FromQuery] SearchTracksParams requestParams)
         {
 
             /* var validationResult = _requestValidatorService.ValidateRequest(requestParams, _searchTracksParamsValidator);

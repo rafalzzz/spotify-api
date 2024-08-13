@@ -39,7 +39,7 @@ namespace SpotifyApi.Services
         {
             try
             {
-                var passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
+                string passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
 
                 User newUser = new()
                 {

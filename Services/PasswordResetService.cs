@@ -49,14 +49,9 @@ namespace SpotifyApi.Services
         {
             Result<User> userResult = _userService.GetUserByLogin(passwordResetDto.Login);
 
-            if (userResult.IsSuccess)
-            {
-                return Result<User>.Failure(userResult.Error);
-            }
-
-            return userResult.IsSuccess && userResult.Value != null
-                ? Result<User>.Success(userResult.Value)
-                : Result<User>.Failure(Error.WrongEmail);
+            return userResult.IsSuccess ?
+                Result<User>.Success(userResult.Value) :
+                Result<User>.Failure(Error.WrongEmail);
         }
 
         private static List<Claim> GetPasswordResetTokenClaims(string userEmail)
@@ -72,25 +67,25 @@ namespace SpotifyApi.Services
 
         private string? GeneratePasswordResetToken(string userEmail)
         {
-            var claims = GetPasswordResetTokenClaims(userEmail);
-            var passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetSecretKey);
+            List<Claim>? claims = GetPasswordResetTokenClaims(userEmail);
+            string? passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetSecretKey);
 
             if (passwordResetSecretKey == null)
             {
                 return null;
             }
 
-            var expires = DateTime.Now.AddMinutes(_passwordResetSettings.TokenLifeTime);
+            DateTime expires = DateTime.Now.AddMinutes(_passwordResetSettings.TokenLifeTime);
 
             return _jwtService.GenerateToken(claims, _passwordResetSettings.Issuer, _passwordResetSettings.Audience, passwordResetSecretKey, expires);
         }
 
         private async Task<Result<bool>> SendPasswordResetToken(string email, string token)
         {
-            var emailTitle = "Password reset";
-            var clientUrl = Environment.GetEnvironmentVariable(EnvironmentVariables.ClientUrl);
-            var passwordResetUrl = $"{clientUrl}/password-reset/complete/{token}";
-            var emailContent = $@"
+            string? emailTitle = "Password reset";
+            string? clientUrl = Environment.GetEnvironmentVariable(EnvironmentVariables.ClientUrl);
+            string? passwordResetUrl = $"{clientUrl}/password-reset/complete/{token}";
+            string? emailContent = $@"
                 <html>
                     <body style='width: 100%;'>
                         <h3 style='text-align: center;'>To reset your password</h3>
