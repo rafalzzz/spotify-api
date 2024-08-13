@@ -42,12 +42,12 @@ namespace SpotifyApi.Services
                 registerUserDto.Nickname
             );
 
-            if (userExistsResult.IsSuccess && userExistsResult.Value)
+            if (userExistsResult.IsSuccess && !userExistsResult.Value)
             {
                 return Result<RegisterUser>.Success(registerUserDto);
             }
 
-            if (userExistsResult.IsSuccess && !userExistsResult.Value)
+            if (userExistsResult.IsSuccess && userExistsResult.Value)
             {
                 return Result<RegisterUser>.Failure(Error.UserAlreadyExist);
             }

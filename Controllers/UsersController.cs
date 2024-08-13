@@ -10,11 +10,13 @@ namespace SpotifyApi.Controllers
     [Route(ControllerRoutes.User)]
     public class UserController(
         IUserRegistrationService userRegistrationService,
-        IUserLoginService userLoginService
+        IUserLoginService userLoginService,
+        IPasswordResetService passwordResetService
     ) : ControllerBase
     {
         private readonly IUserRegistrationService _userRegistrationService = userRegistrationService;
         private readonly IUserLoginService _userLoginService = userLoginService;
+        private readonly IPasswordResetService _passwordResetService = passwordResetService;
 
         [HttpPost]
         public async Task<ActionResult> Register([FromBody] RegisterUser registerUserDto)
@@ -37,6 +39,18 @@ namespace SpotifyApi.Controllers
                 _ => Ok(),
                 _userLoginService.HandleLoginError
             );
+        }
+
+        [HttpPost("password-reset")]
+        public async Task<ActionResult> PasswordReset([FromBody] PasswordReset passwordResetDto)
+        {
+            return await _passwordResetService.ValidatePasswordResetRequest(passwordResetDto)
+                .Bind(_passwordResetService.CheckIfUserExists)
+                .BindAsync(_passwordResetService.GenerateAndSendPasswordResetToken)
+                .MatchAsync(
+                    _ => Ok(),
+                    _passwordResetService.HandlePasswordResetError
+                );
         }
     }
 }

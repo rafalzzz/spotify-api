@@ -68,33 +68,43 @@ namespace SpotifyApi.Services
             }
         }
 
-        private Result<User?> GetUserByEmail(string email)
+        private Result<User> GetUserByEmail(string email)
         {
             try
             {
                 User? user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
 
-                return Result<User?>.Success(user);
+                if (user is null)
+                {
+                    return Result<User>.Failure(Error.WrongLogin);
+                }
+
+                return Result<User>.Success(user);
             }
             catch (Exception ex)
             {
-                return Result<User?>.Failure(
+                return Result<User>.Failure(
                     new Error(ErrorType.Database, "Database connection error: " + ex.Message)
                 );
             }
         }
 
-        private Result<User?> GetUserByNickname(string nickname)
+        private Result<User> GetUserByNickname(string nickname)
         {
             try
             {
                 User? user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
 
-                return Result<User?>.Success(user);
+                if (user is null)
+                {
+                    return Result<User>.Failure(Error.WrongLogin);
+                }
+
+                return Result<User>.Success(user);
             }
             catch (Exception ex)
             {
-                return Result<User?>.Failure(
+                return Result<User>.Failure(
                     new Error(ErrorType.Database, "Database connection error: " + ex.Message)
                 );
             }
@@ -117,19 +127,10 @@ namespace SpotifyApi.Services
 
         public Result<User> GetUserByLogin(string login)
         {
-            Result<User?> userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
+            Result<User> userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
 
-            if (userResult.IsSuccess || userResult.Value != null)
-            {
-                return Result<User>.Success(userResult.Value!);
-            }
-
-            if (userResult.IsSuccess || userResult.Value == null)
-            {
-                return Result<User>.Failure(Error.WrongLogin);
-            }
-
-            return Result<User>.Success(userResult.Value);
+            return userResult.IsSuccess ? Result<User>.Success(userResult.Value!) :
+                Result<User>.Failure(userResult.Error);
         }
 
         public Result<User> VerifyUser(LoginUser loginUserDto)

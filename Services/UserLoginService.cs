@@ -47,7 +47,7 @@ namespace SpotifyApi.Services
             {
                 ErrorType.Validation => new BadRequestObjectResult(err),
                 ErrorType.WrongLogin => new ConflictObjectResult(err.Description),
-                ErrorType.WrongPassword => new BadRequestObjectResult(err),
+                ErrorType.WrongPassword => new BadRequestObjectResult(err.Description),
                 _ => new ObjectResult("An unexpected error occurred: " + err.Description)
                 {
                     StatusCode = StatusCodes.Status500InternalServerError

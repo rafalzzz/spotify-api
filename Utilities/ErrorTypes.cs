@@ -4,10 +4,13 @@ namespace SpotifyApi.Utilities
     {
         Validation = 0,
         Database = 1,
-        UserAlreadyExist = 2,
-        Failure = 3,
-        PasswordHashing = 4,
-        WrongLogin = 5,
-        WrongPassword = 6,
+        Internal = 3,
+        Failure = 4,
+        UserAlreadyExist = 5,
+        PasswordHashing = 6,
+        WrongLogin = 7,
+        WrongPassword = 8,
+        WrongEmail = 9,
+        GeneratePasswordResetTokenError = 10
     }
 }
