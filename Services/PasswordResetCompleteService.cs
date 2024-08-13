@@ -1,11 +1,11 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using SpotifyApi.Variables;
 using SpotifyApi.Classes;
 using SpotifyApi.Enums;
+using SpotifyApi.Variables;
 
 namespace SpotifyApi.Services
 {
@@ -59,7 +59,7 @@ namespace SpotifyApi.Services
         private static JwtSecurityToken ValidateJwtToken(string token, TokenValidationParameters? tokenValidationParameters)
         {
             JwtSecurityTokenHandler tokenHandler = new();
-            tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+            tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
 
             if (securityToken is not JwtSecurityToken jwtSecurityToken ||
             !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
@@ -93,11 +93,11 @@ namespace SpotifyApi.Services
         {
             try
             {
-                string? passwordResetSecretKey = GetPasswordResetSecretKey();
-                SecurityKey? key = GetSigningCredentialsKey(passwordResetSecretKey);
-                TokenValidationParameters? tokenValidationParameters = CreateTokenValidationParameters(key);
-                JwtSecurityToken jwtSecurityToken = ValidateJwtToken(token, tokenValidationParameters);
-                Claim? emailClaim = GetEmailClaim(jwtSecurityToken);
+                var passwordResetSecretKey = GetPasswordResetSecretKey();
+                var key = GetSigningCredentialsKey(passwordResetSecretKey);
+                var tokenValidationParameters = CreateTokenValidationParameters(key);
+                var jwtSecurityToken = ValidateJwtToken(token, tokenValidationParameters);
+                var emailClaim = GetEmailClaim(jwtSecurityToken);
 
                 return new PasswordResetTokenValidationResult
                 {
@@ -124,7 +124,7 @@ namespace SpotifyApi.Services
 
         public (string? validationError, string? email) ValidateToken(string token)
         {
-            PasswordResetTokenValidationResult validationResult = GetEmailFromPasswordResetToken(token);
+            var validationResult = GetEmailFromPasswordResetToken(token);
 
             if (validationResult.ErrorStatus.HasValue)
             {

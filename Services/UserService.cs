@@ -24,7 +24,7 @@ namespace SpotifyApi.Services
         {
             try
             {
-                bool exists = await _dbContext.UserExists(email, nickname);
+                var exists = await _dbContext.UserExists(email, nickname);
                 return Result<bool>.Success(exists);
             }
             catch (Exception ex)
@@ -39,7 +39,7 @@ namespace SpotifyApi.Services
         {
             try
             {
-                string passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
+                var passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
 
                 User newUser = new()
                 {
@@ -114,7 +114,7 @@ namespace SpotifyApi.Services
         {
             try
             {
-                bool result = _passwordHasherService.Verify(userPassword, password);
+                var result = _passwordHasherService.Verify(userPassword, password);
                 return Result<bool>.Success(result);
             }
             catch (Exception ex)
@@ -127,7 +127,7 @@ namespace SpotifyApi.Services
 
         public Result<User> GetUserByLogin(string login)
         {
-            Result<User> userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
+            var userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
 
             return userResult.IsSuccess ? Result<User>.Success(userResult.Value!) :
                 Result<User>.Failure(userResult.Error);
@@ -135,14 +135,14 @@ namespace SpotifyApi.Services
 
         public Result<User> VerifyUser(LoginUser loginUserDto)
         {
-            Result<User> userResult = GetUserByLogin(loginUserDto.Login);
+            var userResult = GetUserByLogin(loginUserDto.Login);
 
             if (!userResult.IsSuccess)
             {
                 return Result<User>.Failure(userResult.Error);
             }
 
-            Result<bool> passwordResult = VerifyUserPassword(userResult.Value.Password, loginUserDto.Password);
+            var passwordResult = VerifyUserPassword(userResult.Value.Password, loginUserDto.Password);
 
             if (!passwordResult.IsSuccess)
             {

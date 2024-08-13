@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
-using SpotifyApi.Entities;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
@@ -25,7 +24,7 @@ namespace SpotifyApi.Services
 
         public Result<LoginUser> ValidateLogin(LoginUser loginUserDto)
         {
-            Result<LoginUser> validationResult = _requestValidatorService.ValidateRequest(loginUserDto, _loginUserValidator);
+            var validationResult = _requestValidatorService.ValidateRequest(loginUserDto, _loginUserValidator);
 
             return validationResult.IsSuccess ? Result<LoginUser>.Success(loginUserDto) :
                 Result<LoginUser>.Failure(
@@ -35,7 +34,7 @@ namespace SpotifyApi.Services
 
         public Result<LoginUser> CheckLoginAndPassword(LoginUser loginUserDto)
         {
-            Result<User> verifyUserResult = _userService.VerifyUser(loginUserDto);
+            var verifyUserResult = _userService.VerifyUser(loginUserDto);
 
             return verifyUserResult.IsSuccess ? Result<LoginUser>.Success(loginUserDto) :
                 Result<LoginUser>.Failure(verifyUserResult.Error);

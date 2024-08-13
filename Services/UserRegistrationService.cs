@@ -26,7 +26,7 @@ namespace SpotifyApi.Services
 
         public Result<RegisterUser> ValidateRegistration(RegisterUser registerUserDto)
         {
-            Result<RegisterUser> validationResult = _requestValidatorService.ValidateRequest(
+            var validationResult = _requestValidatorService.ValidateRequest(
                 registerUserDto,
                 _registerUserValidator
             );
@@ -37,7 +37,7 @@ namespace SpotifyApi.Services
 
         public async Task<Result<RegisterUser>> CheckIfUserExists(RegisterUser registerUserDto)
         {
-            Result<bool> userExistsResult = await _userService.UserExists(
+            var userExistsResult = await _userService.UserExists(
                 registerUserDto.Email,
                 registerUserDto.Nickname
             );
@@ -57,7 +57,7 @@ namespace SpotifyApi.Services
 
         public Result<User> CreateUser(RegisterUser registerUserDto)
         {
-            Result<User> createUserResult = _userService.CreateUser(registerUserDto);
+            var createUserResult = _userService.CreateUser(registerUserDto);
 
             return createUserResult.IsSuccess ?
                 Result<User>.Success(createUserResult.Value) :
