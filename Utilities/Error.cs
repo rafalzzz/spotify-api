@@ -8,5 +8,7 @@ namespace SpotifyApi.Utilities
         public static Error WrongPassword = new(ErrorType.WrongPassword, "Incorrect password");
         public static Error WrongEmail = new(ErrorType.WrongEmail, "Account with the provided email does not exist");
         public static Error GeneratePasswordResetTokenError = new(ErrorType.GeneratePasswordResetTokenError, "Failed to generate password reset token");
+        public static Error TokenHasExpired = new(ErrorType.TokenExpired, "Token has expired");
+        public static Error InvalidToken = new(ErrorType.InvalidToken, "Invalid token");
     }
 }
