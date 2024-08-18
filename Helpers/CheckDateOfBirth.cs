@@ -9,9 +9,9 @@ namespace SpotifyApi.Helpers
 
         public static bool BeLessThan100YearsOld(string dateOfBirth)
         {
-            if (!DateTime.TryParse(dateOfBirth, out DateTime dateTime)) return false;
+            if (!DateTime.TryParse(dateOfBirth, out var dateTime)) return false;
 
-            int diff = DateTime.Now.Year - dateTime.Year;
+            var diff = DateTime.Now.Year - dateTime.Year;
             if (dateTime > DateTime.Now.AddYears(-diff)) diff--;
 
             return diff <= 100;
@@ -19,7 +19,7 @@ namespace SpotifyApi.Helpers
 
         public static bool BeLessThanOrEqualToToday(string dateOfBirth)
         {
-            if (!DateTime.TryParse(dateOfBirth, out DateTime dateTime)) return false;
+            if (!DateTime.TryParse(dateOfBirth, out var dateTime)) return false;
             return dateTime <= DateTime.Now;
         }
     }

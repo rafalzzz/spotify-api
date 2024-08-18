@@ -37,7 +37,7 @@ namespace SpotifyApi.Services
 
         public Result<PasswordReset> ValidatePasswordResetRequest(PasswordReset passwordResetDto)
         {
-            Result<PasswordReset> validationResult = _requestValidatorService.ValidateRequest(passwordResetDto, _passwordResetValidator);
+            var validationResult = _requestValidatorService.ValidateRequest(passwordResetDto, _passwordResetValidator);
 
             return validationResult.IsSuccess ? Result<PasswordReset>.Success(passwordResetDto)
                 : Result<PasswordReset>.Failure(
@@ -47,7 +47,7 @@ namespace SpotifyApi.Services
 
         public Result<User> CheckIfUserExists(PasswordReset passwordResetDto)
         {
-            Result<User> userResult = _userService.GetUserByLogin(passwordResetDto.Login);
+            var userResult = _userService.GetUserByLogin(passwordResetDto.Login);
 
             return userResult.IsSuccess ?
                 Result<User>.Success(userResult.Value) :
@@ -67,25 +67,25 @@ namespace SpotifyApi.Services
 
         private string? GeneratePasswordResetToken(string userEmail)
         {
-            List<Claim>? claims = GetPasswordResetTokenClaims(userEmail);
-            string? passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetSecretKey);
+            var claims = GetPasswordResetTokenClaims(userEmail);
+            var passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetSecretKey);
 
             if (passwordResetSecretKey == null)
             {
                 return null;
             }
 
-            DateTime expires = DateTime.Now.AddMinutes(_passwordResetSettings.TokenLifeTime);
+            var expires = DateTime.Now.AddMinutes(_passwordResetSettings.TokenLifeTime);
 
             return _jwtService.GenerateToken(claims, _passwordResetSettings.Issuer, _passwordResetSettings.Audience, passwordResetSecretKey, expires);
         }
 
         private async Task<Result<bool>> SendPasswordResetToken(string email, string token)
         {
-            string? emailTitle = "Password reset";
-            string? clientUrl = Environment.GetEnvironmentVariable(EnvironmentVariables.ClientUrl);
-            string? passwordResetUrl = $"{clientUrl}/password-reset/complete/{token}";
-            string? emailContent = $@"
+            var emailTitle = "Password reset";
+            var clientUrl = Environment.GetEnvironmentVariable(EnvironmentVariables.ClientUrl);
+            var passwordResetUrl = $"{clientUrl}/password-reset/complete/{token}";
+            var emailContent = $@"
                 <html>
                     <body style='width: 100%;'>
                         <h3 style='text-align: center;'>To reset your password</h3>
@@ -111,14 +111,23 @@ namespace SpotifyApi.Services
 
         public async Task<Result<bool>> GenerateAndSendPasswordResetToken(User user)
         {
-            string? token = GeneratePasswordResetToken(user.Email);
+
+            var token = GeneratePasswordResetToken(user.Email);
+
 
             if (token == null)
             {
                 return Result<bool>.Failure(Error.GeneratePasswordResetTokenError);
             }
 
-            Result<bool> sendEmailResult = await SendPasswordResetToken(user.Email, token);
+            var savePasswordResetTokenResult = _userService.SavePasswordResetToken(token, user);
+
+            if (!savePasswordResetTokenResult.IsSuccess)
+            {
+                Result<bool>.Failure(savePasswordResetTokenResult.Error);
+            }
+
+            var sendEmailResult = await SendPasswordResetToken(user.Email, token);
 
             return sendEmailResult.IsSuccess
                 ? Result<bool>.Success(true)

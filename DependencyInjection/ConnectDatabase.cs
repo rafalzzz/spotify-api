@@ -9,7 +9,7 @@ namespace SpotifyApi.DependencyInjection
     {
         public static IServiceCollection ConnectDatabase(this IServiceCollection services)
         {
-            string? connectionString = Environment.GetEnvironmentVariable(EnvironmentVariables.ConnectionString);
+            var connectionString = Environment.GetEnvironmentVariable(EnvironmentVariables.ConnectionString);
             services.AddDbContext<SpotifyDbContext>(options => options.UseNpgsql(connectionString));
 
             return services;

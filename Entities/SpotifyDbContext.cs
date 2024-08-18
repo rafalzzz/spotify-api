@@ -33,14 +33,14 @@ namespace SpotifyApi.Entities
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            IConfigurationRoot? configuration = new ConfigurationBuilder()
+            var configuration = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
             .Build();
 
             Env.Load();
 
-            string? connectionString = Environment.GetEnvironmentVariable(EnvironmentVariables.ConnectionString);
+            var connectionString = Environment.GetEnvironmentVariable(EnvironmentVariables.ConnectionString);
             optionsBuilder.UseNpgsql(connectionString);
         }
 
