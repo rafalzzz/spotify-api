@@ -1,4 +1,3 @@
-using SpotifyApi.Services;
 using SpotifyApi.Classes;
 
 namespace SpotifyApi.DependencyInjection

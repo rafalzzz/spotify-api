@@ -1,34 +1,47 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using SpotifyApi.Variables;
+using FluentValidation;
 using SpotifyApi.Classes;
-using SpotifyApi.Enums;
+using SpotifyApi.Entities;
+using SpotifyApi.Requests;
+using SpotifyApi.Utilities;
+using SpotifyApi.Variables;
 
 namespace SpotifyApi.Services
 {
     public interface IPasswordResetCompleteService
     {
-        (string? validationError, string? email) ValidateToken(string token);
+        Result<PasswordResetComplete> ValidatePasswordResetCompleteRequest(PasswordResetComplete passwordResetCompleteDto);
+        Result<User> ValidateToken(string token);
+        ActionResult HandlePasswordResetCompleteError(Error err);
     }
 
-    public class PasswordResetCompleteService : IPasswordResetCompleteService
+    public class PasswordResetCompleteService(
+        IRequestValidatorService requestValidatorService,
+        IValidator<PasswordResetComplete> passwordResetCompleteValidator,
+        IUserService userService,
+        IJwtService jwtService,
+        IOptions<PasswordResetSettings> passwordResetSettings
+    ) : IPasswordResetCompleteService
     {
-        private readonly IJwtService _jwtService;
-        private readonly PasswordResetSettings _passwordResetSettings;
-        private readonly IEmailService _emailService;
+        private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
+        private readonly IValidator<PasswordResetComplete> _passwordResetCompleteValidator = passwordResetCompleteValidator;
+        private readonly IUserService _userService = userService;
+        private readonly IJwtService _jwtService = jwtService;
+        private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
 
-        public PasswordResetCompleteService(
-            IJwtService jwtService,
-            IOptions<PasswordResetSettings> passwordResetSettings,
-            IEmailService emailService
-            )
+        public Result<PasswordResetComplete> ValidatePasswordResetCompleteRequest(PasswordResetComplete passwordResetCompleteDto)
         {
-            _jwtService = jwtService;
-            _passwordResetSettings = passwordResetSettings.Value;
-            _emailService = emailService;
+            var validationResult = _requestValidatorService.ValidateRequest(passwordResetCompleteDto, _passwordResetCompleteValidator);
+
+            return validationResult.IsSuccess ? Result<PasswordResetComplete>.Success(passwordResetCompleteDto)
+                : Result<PasswordResetComplete>.Failure(
+                    new Error(ErrorType.Validation, validationResult.Error.Description)
+                );
         }
 
         private static string? GetPasswordResetSecretKey()
@@ -65,87 +78,73 @@ namespace SpotifyApi.Services
             };
         }
 
-        private static JwtSecurityToken ValidateJwtToken(string token, TokenValidationParameters? tokenValidationParameters)
-        {
-            JwtSecurityTokenHandler tokenHandler = new();
-            tokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
-
-            if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-            !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-            {
-                throw new SecurityException("Incorrect token");
-            }
-
-            return jwtSecurityToken;
-        }
-
-        private static Claim? GetEmailClaim(JwtSecurityToken? jwtSecurityToken)
-        {
-            if (jwtSecurityToken == null)
-            {
-                return null;
-            }
-
-            return jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
-        }
-
-        private PasswordResetTokenValidationResult CreateErrorResult(VerifyPasswordResetTokenError status)
-        {
-            return new PasswordResetTokenValidationResult
-            {
-                Email = null,
-                ErrorStatus = status
-            };
-        }
-
-        private PasswordResetTokenValidationResult GetEmailFromPasswordResetToken(string token)
+        private static Result<JwtSecurityToken> ValidateJwtToken(string token, TokenValidationParameters? tokenValidationParameters)
         {
             try
             {
-                string? passwordResetSecretKey = GetPasswordResetSecretKey();
-                SecurityKey? key = GetSigningCredentialsKey(passwordResetSecretKey);
-                TokenValidationParameters? tokenValidationParameters = CreateTokenValidationParameters(key);
-                JwtSecurityToken jwtSecurityToken = ValidateJwtToken(token, tokenValidationParameters);
-                Claim? emailClaim = GetEmailClaim(jwtSecurityToken);
+                JwtSecurityTokenHandler tokenHandler = new();
+                tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
 
-                return new PasswordResetTokenValidationResult
+                if (securityToken is not JwtSecurityToken jwtSecurityToken ||
+                    !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    Email = emailClaim?.Value,
-                    ErrorStatus = null
-                };
+                    return Result<JwtSecurityToken>.Failure(Error.InvalidToken);
+                }
+
+                return Result<JwtSecurityToken>.Success(jwtSecurityToken);
             }
             catch (SecurityTokenExpiredException)
             {
+
                 Console.WriteLine($"Token has expired. Time: {DateTime.Now}.");
-                return CreateErrorResult(VerifyPasswordResetTokenError.TokenHasExpired);
+                return Result<JwtSecurityToken>.Failure(Error.TokenHasExpired);
             }
             catch (SecurityException exception)
             {
                 Console.WriteLine($"Reset password token validation error. Time: {DateTime.Now}. Error message: {exception.Message}");
-                return CreateErrorResult(VerifyPasswordResetTokenError.TokenValidationError);
+                return Result<JwtSecurityToken>.Failure(Error.InvalidToken);
             }
             catch (Exception exception)
             {
                 Console.WriteLine($"Unexpected error during token validation. Time: {DateTime.Now}. Error message: {exception.Message}");
-                return CreateErrorResult(VerifyPasswordResetTokenError.TokenValidationError);
+                return Result<JwtSecurityToken>.Failure(Error.InvalidToken);
             }
         }
 
-        public (string? validationError, string? email) ValidateToken(string token)
+        private static Result<string> GetEmailFromJwtToken(JwtSecurityToken jwtSecurityToken)
         {
-            PasswordResetTokenValidationResult validationResult = GetEmailFromPasswordResetToken(token);
-
-            if (validationResult.ErrorStatus.HasValue)
+            var emailClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
+            if (emailClaim == null)
             {
-                return validationResult.ErrorStatus.Value switch
-                {
-                    VerifyPasswordResetTokenError.TokenHasExpired => ("Token has expired", null),
-                    VerifyPasswordResetTokenError.TokenValidationError => ("Invalid token", null),
-                    _ => ("Unknown token error", null),
-                };
+                return Result<string>.Failure(Error.InvalidToken);
             }
+            return Result<string>.Success(emailClaim.Value);
+        }
 
-            return (null, validationResult.Email);
+        public Result<User> ValidateToken(string token)
+        {
+            var passwordResetSecretKey = GetPasswordResetSecretKey();
+            var key = GetSigningCredentialsKey(passwordResetSecretKey);
+            var tokenValidationParameters = CreateTokenValidationParameters(key);
+
+            return ValidateJwtToken(token, tokenValidationParameters)
+                .Bind(GetEmailFromJwtToken)
+                .Bind(_userService.GetUserByEmail);
+        }
+
+        public ActionResult HandlePasswordResetCompleteError(Error err)
+        {
+            return err.Type switch
+            {
+                ErrorType.Validation => new BadRequestObjectResult(err),
+                ErrorType.InvalidToken => new BadRequestObjectResult(err.Description),
+                ErrorType.TokenExpired => new BadRequestObjectResult(err.Description),
+                ErrorType.WrongLogin => new BadRequestObjectResult(Error.InvalidToken.Description),
+                _ => new ObjectResult("An unexpected error occurred: " + err.Description)
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                }
+            };
         }
     }
 }

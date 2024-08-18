@@ -1,129 +1,72 @@
 using Microsoft.AspNetCore.Mvc;
-using FluentValidation;
 using SpotifyApi.Variables;
 using SpotifyApi.Requests;
 using SpotifyApi.Services;
-using SpotifyApi.Enums;
-using SpotifyApi.Classes;
-using SpotifyApi.Entities;
+using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Controllers
 {
     [ApiController]
     [Route(ControllerRoutes.User)]
     public class UserController(
-        IRequestValidatorService requestValidatorService,
-        IValidator<RegisterUser> registerUserValidator,
-        IValidator<LoginUser> loginUserValidator,
-        IValidator<PasswordReset> passwordResetValidator,
-        IValidator<PasswordResetComplete> passwordResetCompleteValidator,
-        IUserService userService,
-        IPasswordResetCompleteService passwordResetCompleteService
+        IUserRegistrationService userRegistrationService,
+        IUserLoginService userLoginService,
+        IPasswordResetService passwordResetService,
+        IPasswordResetCompleteService passwordResetCompleteService,
+        IUserService userService
     ) : ControllerBase
     {
-        private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
-        private readonly IValidator<RegisterUser> _registerUserValidator = registerUserValidator;
-        private readonly IValidator<LoginUser> _loginUserValidator = loginUserValidator;
-        private readonly IValidator<PasswordReset> _passwordResetValidator = passwordResetValidator;
-        private readonly IValidator<PasswordResetComplete> _passwordResetCompleteValidator = passwordResetCompleteValidator;
-        private readonly IUserService _userService = userService;
+        private readonly IUserRegistrationService _userRegistrationService = userRegistrationService;
+        private readonly IUserLoginService _userLoginService = userLoginService;
+        private readonly IPasswordResetService _passwordResetService = passwordResetService;
         private readonly IPasswordResetCompleteService _passwordResetCompleteService = passwordResetCompleteService;
+        private readonly IUserService _userService = userService;
 
         [HttpPost]
-        public async Task<ActionResult> Register(
-                [FromBody] RegisterUser registerUserDto)
+        public async Task<ActionResult> Register([FromBody] RegisterUser registerUserDto)
         {
-            var validationResult = _requestValidatorService.ValidateRequest(registerUserDto, _registerUserValidator);
-            if (validationResult is BadRequestObjectResult)
-            {
-                return validationResult;
-            }
-
-            bool userAlreadyExist = await _userService.UserExists(registerUserDto.Email, registerUserDto.Nickname);
-
-            if (userAlreadyExist)
-            {
-                return Conflict("User with the provided email address or nickname already exists");
-            }
-
-            var id = _userService.CreateUser(registerUserDto);
-            if (id is null)
-            {
-                return StatusCode(500, "Something went wrong, please try again");
-            }
-
-            return Ok();
+            return await _userRegistrationService.ValidateRegistration(registerUserDto)
+                .BindAsync(async _ => await _userRegistrationService.CheckIfUserExists(registerUserDto))
+                .ThenBind(_ => _userRegistrationService.CreateUser(registerUserDto))
+                .MatchAsync(
+                    _ => Ok(),
+                    _userRegistrationService.HandleRegistrationError
+                );
         }
 
         [HttpPost("login")]
         public ActionResult Login([FromBody] LoginUser loginUserDto)
         {
-            var validationResult = _requestValidatorService.ValidateRequest(loginUserDto, _loginUserValidator);
-            if (validationResult is BadRequestObjectResult)
-            {
-                return validationResult;
-            }
-
-            LoginUserResult result = _userService.VerifyUser(loginUserDto);
-
-            if (result.Error == LoginUserError.WrongLogin)
-            {
-                return NotFound("Incorrect login");
-            }
-
-            if (result.Error == LoginUserError.WrongPassword)
-            {
-                return BadRequest("Incorrect password");
-            }
-
-            return Ok();
+            return _userLoginService.ValidateLogin(loginUserDto)
+            .Bind(_userLoginService.CheckLoginAndPassword)
+            .Match(
+                _ => Ok(),
+                _userLoginService.HandleLoginError
+            );
         }
 
         [HttpPost("password-reset")]
-        public async Task<IActionResult> PasswordReset([FromBody] PasswordReset passwordResetDto)
+        public async Task<ActionResult> PasswordReset([FromBody] PasswordReset passwordResetDto)
         {
-            var validationResult = _requestValidatorService.ValidateRequest(passwordResetDto, _passwordResetValidator);
-            if (validationResult is BadRequestObjectResult)
-            {
-                return validationResult;
-            }
-
-            User? user = _userService.GetUserByLogin(passwordResetDto.Login);
-
-            if (user is null)
-            {
-                return BadRequest("Account with the provided login doest not exist");
-            }
-
-            await _userService.GenerateAndSendPasswordResetToken(user);
-
-            return Ok();
+            return await _passwordResetService.ValidatePasswordResetRequest(passwordResetDto)
+                .Bind(_passwordResetService.CheckIfUserExists)
+                .BindAsync(_passwordResetService.GenerateAndSendPasswordResetToken)
+                .MatchAsync(
+                    _ => Ok(),
+                    _passwordResetService.HandlePasswordResetError
+                );
         }
 
         [HttpPut("password-reset-complete/{token}")]
         public ActionResult PasswordResetComplete([FromBody] PasswordResetComplete passwordResetCompleteDto, [FromRoute] string token)
         {
-            var validationResult = _requestValidatorService.ValidateRequest(passwordResetCompleteDto, _passwordResetCompleteValidator);
-            if (validationResult is BadRequestObjectResult badRequest)
-            {
-                return badRequest;
-            }
-
-            (string? validationError, string? email) = _passwordResetCompleteService.ValidateToken(token);
-
-            if (validationError != null || email == null)
-            {
-                return Unauthorized(validationError);
-            }
-
-            User? user = _userService.CheckUserPasswordResetToken(email, token);
-            if (user == null)
-            {
-                return BadRequest("Invalid token");
-            }
-
-            _userService.ChangeUserPassword(user, passwordResetCompleteDto.Password);
-            return Ok("Password has changed successfully");
+            return _passwordResetCompleteService.ValidatePasswordResetCompleteRequest(passwordResetCompleteDto)
+                .Bind(_ => _passwordResetCompleteService.ValidateToken(token))
+                .Bind(user => _userService.ChangeUserPassword(user, token, passwordResetCompleteDto.Password))
+                .Match(
+                    _ => Ok(),
+                    _passwordResetCompleteService.HandlePasswordResetCompleteError
+                );
         }
     }
 }

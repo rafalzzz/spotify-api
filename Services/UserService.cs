@@ -1,158 +1,205 @@
-using Microsoft.AspNetCore.Mvc;
-using SpotifyApi.Requests;
-using SpotifyApi.Classes;
 using SpotifyApi.Entities;
-using SpotifyApi.Enums;
-using SpotifyApi.Services;
+using SpotifyApi.Requests;
+using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {
     public interface IUserService
     {
-        Task<bool> UserExists(string email, string nickname);
-        int? CreateUser(RegisterUser userDto);
-        LoginUserResult VerifyUser(LoginUser loginUserDto);
-        User? GetUserByLogin(string login);
-        Task<IActionResult> GenerateAndSendPasswordResetToken(User user);
-        User? CheckUserPasswordResetToken(string email, string token);
-        bool ChangeUserPassword(User user, string password);
+        Task<Result<bool>> UserExists(string email, string nickname);
+        Result<User> CreateUser(RegisterUser registerUserDto);
+        Result<User> VerifyUser(LoginUser loginUserDto);
+        public Result<User> GetUserByEmail(string email);
+        Result<User> GetUserByLogin(string login);
+        Result<bool> SavePasswordResetToken(string token, User user);
+        Result<bool> ChangeUserPassword(User user, string token, string password);
     }
 
     public class UserService(
         SpotifyDbContext dbContext,
-        IPasswordHasherService passwordHasherService,
-        IPasswordResetService passwordResetService
-            ) : IUserService
+        IPasswordHasherService passwordHasherService
+    ) : IUserService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
         private readonly IPasswordHasherService _passwordHasherService = passwordHasherService;
-        private readonly IPasswordResetService _passwordResetService = passwordResetService;
 
-        public async Task<bool> UserExists(string email, string nickname)
+        public async Task<Result<bool>> UserExists(string email, string nickname)
         {
-            return await _dbContext.UserExists(email, nickname);
-        }
-
-        public int? CreateUser(RegisterUser registerUserDto)
-        {
-            var passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
-
-            User newUser = new()
+            try
             {
-                Email = registerUserDto.Email,
-                Password = passwordHash,
-                Nickname = registerUserDto.Nickname,
-                DateOfBirth = registerUserDto.DateOfBirth,
-                Gender = registerUserDto.Gender,
-                Offers = registerUserDto.Offers,
-                ShareInformation = registerUserDto.ShareInformation,
-                Terms = registerUserDto.Terms,
-                RefreshToken = "",
-                PasswordResetToken = "",
-            };
-
-            _dbContext.Users.Add(newUser);
-            _dbContext.SaveChanges();
-
-            return newUser.Id;
-        }
-
-        private User? GetUserByEmail(string email)
-        {
-            var user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
-            return user;
-        }
-
-        private User? GetUserByNickname(string nickname)
-        {
-            var user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
-            return user;
-        }
-
-        private bool VerifyUserPassword(string userPassword, string password)
-        {
-            return _passwordHasherService.Verify(
-                    userPassword,
-                    password
+                var exists = await _dbContext.UserExists(email, nickname);
+                return Result<bool>.Success(exists);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(
+                    new Error(ErrorType.Database, "Database error: " + ex.Message)
                 );
+            }
         }
 
-        public User? GetUserByLogin(string login)
+        public Result<User> CreateUser(RegisterUser registerUserDto)
         {
-            bool isEmail = login.Contains("@");
-
-            if (isEmail)
+            try
             {
-                return GetUserByEmail(login);
+                var passwordHash = _passwordHasherService.Hash(registerUserDto.Password);
+
+                User newUser = new()
+                {
+                    Email = registerUserDto.Email,
+                    Password = passwordHash,
+                    Nickname = registerUserDto.Nickname,
+                    DateOfBirth = registerUserDto.DateOfBirth,
+                    Gender = registerUserDto.Gender,
+                    Offers = registerUserDto.Offers,
+                    ShareInformation = registerUserDto.ShareInformation,
+                    Terms = registerUserDto.Terms,
+                    RefreshToken = "",
+                    PasswordResetToken = "",
+                };
+
+                _dbContext.Users.Add(newUser);
+                _dbContext.SaveChanges();
+
+                return Result<User>.Success(newUser);
             }
-
-            return GetUserByNickname(login);
-
-        }
-
-        public LoginUserResult VerifyUser(LoginUser loginUserDto)
-        {
-            User? user = GetUserByLogin(loginUserDto.Login);
-
-            if (user is null)
+            catch (Exception ex)
             {
-                return new LoginUserResult(LoginUserError.WrongLogin, null);
-            }
-
-            bool isPasswordCorrect = VerifyUserPassword(
-                    user.Password,
-                    loginUserDto.Password
+                return Result<User>.Failure(
+                    new Error(ErrorType.Database, "Database error: " + ex.Message)
                 );
+            }
+        }
 
-            if (!isPasswordCorrect)
+        public Result<User> GetUserByEmail(string email)
+        {
+            try
             {
-                return new LoginUserResult(LoginUserError.WrongPassword, null);
+                User? user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
+
+                if (user is null)
+                {
+                    return Result<User>.Failure(Error.WrongLogin);
+                }
+
+                return Result<User>.Success(user);
+            }
+            catch (Exception ex)
+            {
+                return Result<User>.Failure(
+                    new Error(ErrorType.Database, "Database error: " + ex.Message)
+                );
+            }
+        }
+
+        private Result<User> GetUserByNickname(string nickname)
+        {
+            try
+            {
+                User? user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
+
+                if (user is null)
+                {
+                    return Result<User>.Failure(Error.WrongLogin);
+                }
+
+                return Result<User>.Success(user);
+            }
+            catch (Exception ex)
+            {
+                return Result<User>.Failure(
+                    new Error(ErrorType.Database, "Database error: " + ex.Message)
+                );
+            }
+        }
+
+        private Result<bool> VerifyUserPassword(string userPassword, string password)
+        {
+            try
+            {
+                var result = _passwordHasherService.Verify(userPassword, password);
+                return Result<bool>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Failure(
+                    new Error(ErrorType.PasswordHashing, "Password hashing error: " + ex.Message)
+                );
+            }
+        }
+
+        public Result<User> GetUserByLogin(string login)
+        {
+            var userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
+
+            return userResult.IsSuccess ? Result<User>.Success(userResult.Value!) :
+                Result<User>.Failure(userResult.Error);
+        }
+
+        public Result<User> VerifyUser(LoginUser loginUserDto)
+        {
+            var userResult = GetUserByLogin(loginUserDto.Login);
+
+            if (!userResult.IsSuccess)
+            {
+                return Result<User>.Failure(userResult.Error);
             }
 
-            return new LoginUserResult(null, user);
-        }
+            var passwordResult = VerifyUserPassword(userResult.Value.Password, loginUserDto.Password);
 
-        public void SavePasswordResetToken(string token, User user)
-        {
-            user.PasswordResetToken = token;
-            _dbContext.SaveChanges();
-        }
-
-        public async Task<IActionResult> GenerateAndSendPasswordResetToken(User user)
-        {
-            string? token = _passwordResetService.GeneratePasswordResetToken(user.Email);
-
-            if (token == null)
+            if (!passwordResult.IsSuccess)
             {
-                return new ObjectResult("An error occurred while generating the token") { StatusCode = 500 };
+                return Result<User>.Failure(passwordResult.Error);
             }
 
-            SavePasswordResetToken(token, user);
-            await _passwordResetService.SendPasswordResetToken(user.Email, token);
-
-            return new OkResult();
-        }
-
-        public User? CheckUserPasswordResetToken(string email, string token)
-        {
-            User? user = GetUserByEmail(email);
-
-            if (user != null && user.PasswordResetToken == token)
+            if (!passwordResult.Value)
             {
-                return user;
+                return Result<User>.Failure(Error.WrongPassword);
             }
 
-            return null;
+            return Result<User>.Success(userResult.Value);
         }
 
-        public bool ChangeUserPassword(User user, string password)
+        public Result<bool> SavePasswordResetToken(string token, User user)
         {
-            var passwordHash = _passwordHasherService.Hash(password);
-            user.Password = passwordHash;
-            user.PasswordResetToken = "";
-            _dbContext.SaveChanges();
+            try
+            {
+                user.PasswordResetToken = token;
+                _dbContext.SaveChanges();
 
-            return true;
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error changing user password. Time: {DateTime.Now}. Error message: {ex.Message}");
+                return Result<bool>.Failure(new Error(ErrorType.Database, "Database error: " + ex.Message));
+            }
+        }
+
+        public Result<bool> ChangeUserPassword(User user, string token, string password)
+        {
+            var isPasswordUserResetTokenCorrect = user.PasswordResetToken == token;
+
+            if (!isPasswordUserResetTokenCorrect)
+            {
+                return Result<bool>.Failure(Error.InvalidToken);
+            }
+
+            try
+            {
+                var passwordHash = _passwordHasherService.Hash(password);
+                user.Password = passwordHash;
+                user.PasswordResetToken = "";
+
+                _dbContext.SaveChanges();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error changing user password. Time: {DateTime.Now}. Error message: {ex.Message}");
+                return Result<bool>.Failure(new Error(ErrorType.Database, "Database error: " + ex.Message));
+            }
         }
     }
 }
