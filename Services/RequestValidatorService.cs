@@ -13,7 +13,7 @@ namespace SpotifyApi.Services
     {
         public Result<T> ValidateRequest<T>(T request, IValidator<T> validator)
         {
-            ValidationResult validationResult = validator.Validate(request);
+            var validationResult = validator.Validate(request);
 
             if (!validationResult.IsValid)
             {

@@ -14,7 +14,7 @@ namespace SpotifyApi.Utilities
 
         public static async Task<Result<TOut>> ThenBind<TIn, TOut>(this Task<Result<TIn>> taskResult, Func<TIn, Result<TOut>> bind)
         {
-            Result<TIn> result = await taskResult;
+            var result = await taskResult;
             return result.IsSuccess ? bind(result.Value) : Result<TOut>.Failure(result.Error);
         }
 
@@ -27,7 +27,7 @@ namespace SpotifyApi.Utilities
 
         public static async Task<TOut> MatchAsync<TIn, TOut>(this Task<Result<TIn>> taskResult, Func<TIn, TOut> onSuccess, Func<Error, TOut> onFailure)
         {
-            Result<TIn> result = await taskResult;
+            var result = await taskResult;
             return result.IsSuccess ? onSuccess(result.Value) : onFailure(result.Error);
         }
     }
