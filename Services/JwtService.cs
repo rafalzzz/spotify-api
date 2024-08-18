@@ -16,13 +16,14 @@ namespace SpotifyApi.Services
 
         public SigningCredentials GetSigningCredentials(string secretKey)
         {
-            SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+
             return new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         }
 
         public string GenerateToken(List<Claim> claims, string issuer, string audience, string secretKey, DateTime expires)
         {
-            SigningCredentials creds = GetSigningCredentials(secretKey);
+            var creds = GetSigningCredentials(secretKey);
 
             JwtSecurityToken token = new(
                 issuer: issuer,
