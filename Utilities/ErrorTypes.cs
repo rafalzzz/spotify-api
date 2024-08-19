@@ -14,5 +14,6 @@ namespace SpotifyApi.Utilities
         GeneratePasswordResetTokenError = 9,
         TokenExpired = 10,
         InvalidToken = 11,
+        ApiItunes = 12
     }
 }
