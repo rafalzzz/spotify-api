@@ -10,5 +10,6 @@ namespace SpotifyApi.Utilities
         public static Error GeneratePasswordResetTokenError = new(ErrorType.GeneratePasswordResetTokenError, "Failed to generate password reset token");
         public static Error TokenHasExpired = new(ErrorType.TokenExpired, "Token has expired");
         public static Error InvalidToken = new(ErrorType.InvalidToken, "Invalid token");
+        public static Error ApiItunesError = new(ErrorType.ApiItunes, "Error calling iTunes API");
     }
 }
