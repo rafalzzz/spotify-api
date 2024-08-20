@@ -16,13 +16,15 @@ namespace SpotifyApi.Services
         IRequestValidatorService requestValidatorService,
         IValidator<SearchTracksParams> searchTracksParamsValidator,
         IOptions<ServiceSettings> options,
-        HttpClient httpClient
+        HttpClient httpClient,
+        IErrorHandlingService errorHandlingService
         ) : ITracksService
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
         private readonly IValidator<SearchTracksParams> _searchTracksParamsValidator = searchTracksParamsValidator;
         private readonly ServiceSettings _serviceSettings = options.Value;
         private readonly HttpClient _httpClient = httpClient;
+        private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         public Result<SearchTracksParams> ValidateTracksRequestLogin(SearchTracksParams requestParams)
         {
@@ -40,31 +42,47 @@ namespace SpotifyApi.Services
 
         public async Task<Result<IEnumerable<Track>>> GetTracksFromItunesApi(SearchTracksParams validParams)
         {
-            var url = $"{_serviceSettings.ItunesApi}/search?term={validParams.Term}&entity={validParams.Entity}&limit={validParams.Limit}&offset={validParams.Offset}";
-            var response = await _httpClient.GetAsync(url);
-
-            Console.WriteLine(url);
-            Console.WriteLine(response);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                return Result<IEnumerable<Track>>.Failure(Error.ApiItunesError);
-            }
+                var url = $"{_serviceSettings.ItunesApi}/search?term={validParams.Term}&entity={validParams.Entity}&limit={validParams.Limit}&offset={validParams.Offset}";
+                var response = await _httpClient.GetAsync(url);
 
-            var responseString = await response.Content.ReadAsStringAsync();
-            var jsonDocument = JsonDocument.Parse(responseString);
+                Console.WriteLine(url);
+                Console.WriteLine(response);
 
-            var tracks = jsonDocument.RootElement.GetProperty("results")
-                .EnumerateArray()
-                .Select(trackJson => new Track
+                if (!response.IsSuccessStatusCode)
                 {
-                    TrackName = trackJson.GetProperty("trackName").GetString(),
-                    ArtistName = trackJson.GetProperty("artistName").GetString(),
-                })
-                .ToList();
+                    return Result<IEnumerable<Track>>.Failure(Error.ApiItunesError);
+                }
 
+                var responseString = await response.Content.ReadAsStringAsync();
+                var jsonDocument = JsonDocument.Parse(responseString);
 
-            return Result<IEnumerable<Track>>.Success(tracks);
+                var tracks = jsonDocument.RootElement.GetProperty("results")
+                    .EnumerateArray()
+                    .Select(trackJson => new Track
+                    {
+                        TrackName = trackJson.GetProperty("trackName").GetString(),
+                        ArtistName = trackJson.GetProperty("artistName").GetString(),
+                    })
+                    .ToList();
+
+                return Result<IEnumerable<Track>>.Success(tracks);
+            }
+            catch (Exception exception)
+            {
+                var logErrorAction = "get tracks from iTunes API";
+                var initialErrorMessage = "Unexpected iTunes API error";
+
+                var error = _errorHandlingService.HandleError(
+                    ErrorType.ApiItunes,
+                    logErrorAction,
+                    initialErrorMessage,
+                    exception
+                );
+
+                return Result<IEnumerable<Track>>.Failure(error);
+            }
         }
     }
 }

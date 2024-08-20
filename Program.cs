@@ -12,6 +12,7 @@ builder.Services.AddHttpClient();
 builder.Services
  .ConnectDatabase()
  .AddConfigurations(builder.Configuration)
+ .UseCustomLogging()
  .AddServices()
  .AddValidators()
  .AddControllers();
