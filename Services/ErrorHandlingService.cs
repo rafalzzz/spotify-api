@@ -6,12 +6,12 @@ namespace SpotifyApi.Services
     public interface IErrorHandlingService
     {
         Error HandleError(
+            Exception exception,
             ErrorType errorType,
             string logErrorAction,
-            string initialErrorMessage,
-            Exception exception
+            string? initialErrorMessage = ""
         );
-        Error HandleDatabaseError(string logErrorAction, Exception exception);
+        Error HandleDatabaseError(Exception exception, string logErrorAction);
     }
 
     public class ErrorHandlingService(NLog.ILogger logger) : IErrorHandlingService
@@ -19,10 +19,10 @@ namespace SpotifyApi.Services
         private readonly NLog.ILogger _logger = logger;
 
         public Error HandleError(
+            Exception exception,
             ErrorType errorType,
             string logErrorAction,
-            string initialErrorMessage,
-            Exception exception
+            string? initialErrorMessage = ""
         )
         {
             var logErrorMessage = $"ErrorType: {errorType.GetDescription()}. Action: {logErrorAction} Time: {DateTime.Now}. Error message: {exception.Message}";
@@ -33,11 +33,9 @@ namespace SpotifyApi.Services
             return error;
         }
 
-        public Error HandleDatabaseError(string logErrorAction, Exception exception)
+        public Error HandleDatabaseError(Exception exception, string logErrorAction)
         {
-            var initialErrorMessage = "Unexpected database error";
-
-            return HandleError(ErrorType.Database, logErrorAction, initialErrorMessage, exception);
+            return HandleError(exception, ErrorType.Database, logErrorAction);
         }
     }
 }

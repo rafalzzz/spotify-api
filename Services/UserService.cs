@@ -116,6 +116,7 @@ namespace SpotifyApi.Services
             try
             {
                 var result = _passwordHasherService.Verify(userPassword, password);
+
                 return Result<bool>.Success(result);
             }
             catch (Exception exception)
@@ -202,8 +203,8 @@ namespace SpotifyApi.Services
         private Result<ResultType> HandleUserException<ResultType>(string logErrorAction, Exception exception)
         {
             var error = _errorHandlingService.HandleDatabaseError(
-                logErrorAction,
-                exception
+                exception,
+                logErrorAction
             );
 
             return Result<ResultType>.Failure(error);

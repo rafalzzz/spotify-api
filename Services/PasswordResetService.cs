@@ -25,7 +25,8 @@ namespace SpotifyApi.Services
         IUserService userService,
         IJwtService jwtService,
         IOptions<PasswordResetSettings> passwordResetSettings,
-        IEmailService emailService
+        IEmailService emailService,
+        IErrorHandlingService errorHandlingService
     ) : IPasswordResetService
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
@@ -34,6 +35,7 @@ namespace SpotifyApi.Services
         private readonly IJwtService _jwtService = jwtService;
         private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
         private readonly IEmailService _emailService = emailService;
+        private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         public Result<PasswordReset> ValidatePasswordResetRequest(PasswordReset passwordResetDto)
         {
@@ -101,11 +103,19 @@ namespace SpotifyApi.Services
 
                 return Result<bool>.Success(true);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                return Result<bool>.Failure(
-                    new Error(ErrorType.Failure, ex.Message)
+                var logErrorAction = "send password reset token";
+                var initialErrorMessage = "Unexpected error occured during sending password reset token";
+
+                var error = _errorHandlingService.HandleError(
+                exception,
+                ErrorType.Failure,
+                logErrorAction,
+                initialErrorMessage
                 );
+
+                return Result<bool>.Failure(error);
             }
         }
 
