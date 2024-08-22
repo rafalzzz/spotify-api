@@ -17,11 +17,13 @@ namespace SpotifyApi.Services
 
     public class UserService(
         SpotifyDbContext dbContext,
-        IPasswordHasherService passwordHasherService
+        IPasswordHasherService passwordHasherService,
+        IErrorHandlingService errorHandlingService
     ) : IUserService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
         private readonly IPasswordHasherService _passwordHasherService = passwordHasherService;
+        private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         public async Task<Result<bool>> UserExists(string email, string nickname)
         {
@@ -30,11 +32,10 @@ namespace SpotifyApi.Services
                 var exists = await _dbContext.UserExists(email, nickname);
                 return Result<bool>.Success(exists);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                return Result<bool>.Failure(
-                    new Error(ErrorType.Database, "Database error: " + ex.Message)
-                );
+                var logErrorAction = "check if user exists";
+                return HandleUserException<bool>(logErrorAction, exception);
             }
         }
 
@@ -63,11 +64,10 @@ namespace SpotifyApi.Services
 
                 return Result<User>.Success(newUser);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                return Result<User>.Failure(
-                    new Error(ErrorType.Database, "Database error: " + ex.Message)
-                );
+                var logErrorAction = "create user";
+                return HandleUserException<User>(logErrorAction, exception);
             }
         }
 
@@ -84,11 +84,10 @@ namespace SpotifyApi.Services
 
                 return Result<User>.Success(user);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                return Result<User>.Failure(
-                    new Error(ErrorType.Database, "Database error: " + ex.Message)
-                );
+                var logErrorAction = "get user by email";
+                return HandleUserException<User>(logErrorAction, exception);
             }
         }
 
@@ -105,11 +104,10 @@ namespace SpotifyApi.Services
 
                 return Result<User>.Success(user);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                return Result<User>.Failure(
-                    new Error(ErrorType.Database, "Database error: " + ex.Message)
-                );
+                var logErrorAction = "get user by nickname";
+                return HandleUserException<User>(logErrorAction, exception);
             }
         }
 
@@ -118,13 +116,13 @@ namespace SpotifyApi.Services
             try
             {
                 var result = _passwordHasherService.Verify(userPassword, password);
+
                 return Result<bool>.Success(result);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                return Result<bool>.Failure(
-                    new Error(ErrorType.PasswordHashing, "Password hashing error: " + ex.Message)
-                );
+                var logErrorAction = "verify user password";
+                return HandleUserException<bool>(logErrorAction, exception);
             }
         }
 
@@ -169,10 +167,10 @@ namespace SpotifyApi.Services
 
                 return Result<bool>.Success(true);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                Console.WriteLine($"Unexpected error changing user password. Time: {DateTime.Now}. Error message: {ex.Message}");
-                return Result<bool>.Failure(new Error(ErrorType.Database, "Database error: " + ex.Message));
+                var logErrorAction = "save password reset token";
+                return HandleUserException<bool>(logErrorAction, exception);
             }
         }
 
@@ -195,11 +193,21 @@ namespace SpotifyApi.Services
 
                 return Result<bool>.Success(true);
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                Console.WriteLine($"Unexpected error changing user password. Time: {DateTime.Now}. Error message: {ex.Message}");
-                return Result<bool>.Failure(new Error(ErrorType.Database, "Database error: " + ex.Message));
+                var logErrorAction = "change user password";
+                return HandleUserException<bool>(logErrorAction, exception);
             }
+        }
+
+        private Result<ResultType> HandleUserException<ResultType>(string logErrorAction, Exception exception)
+        {
+            var error = _errorHandlingService.HandleDatabaseError(
+                exception,
+                logErrorAction
+            );
+
+            return Result<ResultType>.Failure(error);
         }
     }
 }
