@@ -25,7 +25,7 @@ namespace SpotifyApi.Services
         IValidator<PasswordResetComplete> passwordResetCompleteValidator,
         IUserService userService,
         IJwtService jwtService,
-        IOptions<PasswordResetSettings> passwordResetSettings,
+        IOptions<JwtSettings> passwordResetTokenSettings,
         IErrorHandlingService errorHandlingService
         ) : IPasswordResetCompleteService
     {
@@ -33,7 +33,7 @@ namespace SpotifyApi.Services
         private readonly IValidator<PasswordResetComplete> _passwordResetCompleteValidator = passwordResetCompleteValidator;
         private readonly IUserService _userService = userService;
         private readonly IJwtService _jwtService = jwtService;
-        private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
+        private readonly JwtSettings _passwordResetSettings = passwordResetTokenSettings.Value;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         public Result<PasswordResetComplete> ValidatePasswordResetCompleteRequest(PasswordResetComplete passwordResetCompleteDto)
@@ -49,7 +49,7 @@ namespace SpotifyApi.Services
 
         private static string? GetPasswordResetSecretKey()
         {
-            return Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetSecretKey);
+            return Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetTokenSecretKey);
         }
 
         private SecurityKey? GetSigningCredentialsKey(string? secretKey)
