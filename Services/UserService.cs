@@ -13,6 +13,7 @@ namespace SpotifyApi.Services
         Result<User> GetUserByLogin(string login);
         Result<bool> SavePasswordResetToken(string token, User user);
         Result<bool> ChangeUserPassword(User user, string token, string password);
+        Result<bool> SaveUserRefreshToken(User user, string refreshToken);
     }
 
     public class UserService(
@@ -196,6 +197,22 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "change user password";
+                return HandleUserException<bool>(logErrorAction, exception);
+            }
+        }
+
+        public Result<bool> SaveUserRefreshToken(User user, string refreshToken)
+        {
+            try
+            {
+                user.RefreshToken = refreshToken;
+                _dbContext.SaveChanges();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception exception)
+            {
+                var logErrorAction = "save user refresh token";
                 return HandleUserException<bool>(logErrorAction, exception);
             }
         }

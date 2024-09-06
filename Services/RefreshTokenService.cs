@@ -8,26 +8,28 @@ using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {
-    public interface IAccessTokenService
+    public interface IRefreshTokenService
     {
         Result<string> Generate(User user);
+        CookieOptions GetRefreshTokenCookieOptions();
     }
 
-    public class AccessTokenService(
+    public class RefreshTokenService(
         IJwtService jwtService,
-        IOptions<JwtSettings> accessTokenSettings,
-        IErrorHandlingService errorHandlingService
-    ) : IAccessTokenService
+        IOptions<JwtSettings> refreshTokenSettings,
+        IErrorHandlingService errorHandlingService,
+        ICookiesService cookiesService
+    ) : IRefreshTokenService
     {
         private readonly IJwtService _jwtService = jwtService;
-        private readonly JwtSettings _accessTokenSettings = accessTokenSettings.Value;
+        private readonly JwtSettings _refreshTokenSettings = refreshTokenSettings.Value;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
+        private readonly ICookiesService _cookiesService = cookiesService;
 
         private static List<Claim> GetClaims(User user)
         {
             var claims = new List<Claim>
             {
-                new(ClaimTypes.Name, user.Nickname),
                 new(JwtRegisteredClaimNames.Jti, user.Id.ToString())
             };
 
@@ -37,10 +39,10 @@ namespace SpotifyApi.Services
         public Result<string> Generate(User user)
         {
             var claims = GetClaims(user);
-            var accessTokenSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.AccessTokenSecretKey);
-            var expires = DateTime.Now.AddMinutes(_accessTokenSettings.TokenLifeTime);
+            var refreshTokenSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.RefreshTokenSecretKey);
+            var expires = DateTime.Now.AddDays(_refreshTokenSettings.TokenLifeTime);
 
-            if (accessTokenSecretKey == null)
+            if (refreshTokenSecretKey == null)
             {
                 var configurationError = _errorHandlingService.HandleConfigurationError();
                 return Result<string>.Failure(configurationError);
@@ -48,13 +50,19 @@ namespace SpotifyApi.Services
 
             var token = _jwtService.GenerateToken(
                 claims,
-                _accessTokenSettings.Issuer,
-                _accessTokenSettings.Audience,
-                accessTokenSecretKey,
+                _refreshTokenSettings.Issuer,
+                _refreshTokenSettings.Audience,
+                refreshTokenSecretKey,
                 expires
             );
 
             return Result<string>.Success(token);
+        }
+
+        public CookieOptions GetRefreshTokenCookieOptions()
+        {
+            var expires = DateTimeOffset.UtcNow.AddDays(_refreshTokenSettings.TokenLifeTime);
+            return _cookiesService.CreateCookieOptions(expires);
         }
     }
 }

@@ -11,6 +11,7 @@ namespace SpotifyApi.Controllers
     public class UserController(
         IUserRegistrationService userRegistrationService,
         IUserLoginService userLoginService,
+        IRefreshTokenService refreshTokenService,
         IPasswordResetService passwordResetService,
         IPasswordResetCompleteService passwordResetCompleteService,
         IUserService userService
@@ -18,6 +19,7 @@ namespace SpotifyApi.Controllers
     {
         private readonly IUserRegistrationService _userRegistrationService = userRegistrationService;
         private readonly IUserLoginService _userLoginService = userLoginService;
+        private readonly IRefreshTokenService _refreshTokenService = refreshTokenService;
         private readonly IPasswordResetService _passwordResetService = passwordResetService;
         private readonly IPasswordResetCompleteService _passwordResetCompleteService = passwordResetCompleteService;
         private readonly IUserService _userService = userService;
@@ -39,8 +41,15 @@ namespace SpotifyApi.Controllers
         {
             return _userLoginService.ValidateLogin(loginUserDto)
             .Bind(_userLoginService.CheckLoginAndPassword)
+            .Bind(_userLoginService.GenerateTokens)
             .Match(
-                Ok,
+                tokensResult =>
+                {
+                    var accessTokenCookieOptions = _refreshTokenService.GetRefreshTokenCookieOptions();
+                    Response.Cookies.Append(CookieNames.RefreshToken, tokensResult.RefreshToken, accessTokenCookieOptions);
+
+                    return Ok(tokensResult.AccessToken);
+                },
                 _userLoginService.HandleLoginError
             );
         }

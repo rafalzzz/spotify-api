@@ -12,6 +12,9 @@ namespace SpotifyApi.DependencyInjection
             var accessTokenSettings = configuration.GetSection("AccessTokenSettings");
             services.Configure<JwtSettings>(accessTokenSettings);
 
+            var refreshTokenSettings = configuration.GetSection("RefreshTokenSettings");
+            services.Configure<JwtSettings>(refreshTokenSettings);
+
             return services;
         }
     }
