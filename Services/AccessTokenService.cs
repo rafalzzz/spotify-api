@@ -4,21 +4,24 @@ using Microsoft.Extensions.Options;
 using SpotifyApi.Classes;
 using SpotifyApi.Entities;
 using SpotifyApi.Variables;
+using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {
     public interface IAccessTokenService
     {
-
+        Result<string> GenerateJwtToken(User user);
     }
 
     public class AccessTokenService(
         IJwtService jwtService,
-        IOptions<JwtSettings> accessTokenSettings
+        IOptions<JwtSettings> accessTokenSettings,
+        IErrorHandlingService errorHandlingService
     ) : IAccessTokenService
     {
         private readonly IJwtService _jwtService = jwtService;
         private readonly JwtSettings _accessTokenSettings = accessTokenSettings.Value;
+        private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         private static List<Claim> GetClaims(User user)
         {
@@ -31,7 +34,7 @@ namespace SpotifyApi.Services
             return claims;
         }
 
-        public string? GenerateJwtToken(User user)
+        public Result<string> GenerateJwtToken(User user)
         {
             var claims = GetClaims(user);
             var accessTokenSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.AccessTokenSecretKey);
@@ -39,7 +42,8 @@ namespace SpotifyApi.Services
 
             if (accessTokenSecretKey == null)
             {
-                return null;
+                var configurationError = _errorHandlingService.HandleConfigurationError();
+                return Result<string>.Failure(configurationError);
             }
 
             var token = _jwtService.GenerateToken(
@@ -50,7 +54,7 @@ namespace SpotifyApi.Services
                 expires
             );
 
-            return token;
+            return Result<string>.Success(token);
         }
     }
 }

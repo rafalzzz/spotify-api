@@ -74,6 +74,7 @@ namespace SpotifyApi.Services
 
             if (passwordResetSecretKey == null)
             {
+                _errorHandlingService.HandleConfigurationError();
                 return null;
             }
 

@@ -9,19 +9,21 @@ namespace SpotifyApi.Services
     public interface IUserLoginService
     {
         Result<LoginUser> ValidateLogin(LoginUser registerUserDto);
-        Result<User> CheckLoginAndPassword(LoginUser loginUserDto);
+        Result<string> CheckLoginAndPassword(LoginUser loginUserDto);
         ActionResult HandleLoginError(Error err);
     }
 
     public class UserLoginService(
         IRequestValidatorService requestValidatorService,
         IValidator<LoginUser> loginUserValidator,
-        IUserService userService
+        IUserService userService,
+        IAccessTokenService accessTokenService
     ) : IUserLoginService
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
         private readonly IValidator<LoginUser> _loginUserValidator = loginUserValidator;
         private readonly IUserService _userService = userService;
+        private readonly IAccessTokenService _accessTokenService = accessTokenService;
 
         public Result<LoginUser> ValidateLogin(LoginUser loginUserDto)
         {
@@ -33,12 +35,19 @@ namespace SpotifyApi.Services
                 );
         }
 
-        public Result<User> CheckLoginAndPassword(LoginUser loginUserDto)
+        public Result<string> CheckLoginAndPassword(LoginUser loginUserDto)
         {
             var verifyUserResult = _userService.VerifyUser(loginUserDto);
 
-            return verifyUserResult.IsSuccess ? Result<User>.Success(verifyUserResult.Value) :
-                Result<User>.Failure(verifyUserResult.Error);
+            if (!verifyUserResult.IsSuccess)
+            {
+                return Result<string>.Failure(verifyUserResult.Error);
+            }
+
+            var jwtTokenResult = _accessTokenService.GenerateJwtToken(verifyUserResult.Value);
+
+            return jwtTokenResult.IsSuccess ? Result<string>.Success(jwtTokenResult.Value) :
+                Result<string>.Failure(jwtTokenResult.Error);
         }
 
         public ActionResult HandleLoginError(Error err)

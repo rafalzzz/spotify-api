@@ -40,7 +40,7 @@ namespace SpotifyApi.Controllers
             return _userLoginService.ValidateLogin(loginUserDto)
             .Bind(_userLoginService.CheckLoginAndPassword)
             .Match(
-                _ => Ok(),
+                Ok,
                 _userLoginService.HandleLoginError
             );
         }
