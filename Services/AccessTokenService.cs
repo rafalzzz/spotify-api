@@ -1,6 +1,8 @@
 using System.Security.Claims;
+using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using SpotifyApi.Classes;
 using SpotifyApi.Entities;
 using SpotifyApi.Variables;
@@ -11,6 +13,7 @@ namespace SpotifyApi.Services
     public interface IAccessTokenService
     {
         Result<string> Generate(User user);
+        TokenValidationParameters GetJwtBearerSettings();
     }
 
     public class AccessTokenService(
@@ -40,7 +43,7 @@ namespace SpotifyApi.Services
             var accessTokenSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.AccessTokenSecretKey);
             var expires = DateTime.Now.AddMinutes(_accessTokenSettings.TokenLifeTime);
 
-            if (accessTokenSecretKey == null)
+            if (string.IsNullOrEmpty(accessTokenSecretKey))
             {
                 var configurationError = _errorHandlingService.HandleConfigurationError();
                 return Result<string>.Failure(configurationError);
@@ -55,6 +58,30 @@ namespace SpotifyApi.Services
             );
 
             return Result<string>.Success(token);
+        }
+
+        public TokenValidationParameters GetJwtBearerSettings()
+        {
+            var accessTokenSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.AccessTokenSecretKey);
+
+            if (string.IsNullOrEmpty(accessTokenSecretKey))
+            {
+                var configurationError = _errorHandlingService.HandleConfigurationError();
+                throw new InvalidOperationException(configurationError.Description.ToString());
+            }
+
+            return new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = _accessTokenSettings.Issuer,
+                ValidAudience = _accessTokenSettings.Audience,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(accessTokenSecretKey)),
+                ClockSkew = TimeSpan.Zero
+            };
         }
     }
 }

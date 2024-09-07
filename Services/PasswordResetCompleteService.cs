@@ -54,7 +54,7 @@ namespace SpotifyApi.Services
 
         private SecurityKey? GetSigningCredentialsKey(string? secretKey)
         {
-            if (secretKey == null)
+            if (string.IsNullOrEmpty(secretKey))
             {
                 return null;
             }

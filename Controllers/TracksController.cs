@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotifyApi.Classes;
 using SpotifyApi.Services;
@@ -8,6 +9,7 @@ namespace SpotifyApi.Controllers
 {
     [ApiController]
     [Route(ControllerRoutes.Tracks)]
+    [Authorize]
     public class TracksController(ITracksService tracksService) : ControllerBase
     {
         private readonly ITracksService _tracksService = tracksService;

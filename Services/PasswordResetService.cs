@@ -72,7 +72,7 @@ namespace SpotifyApi.Services
             var claims = GetPasswordResetTokenClaims(userEmail);
             var passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetTokenSecretKey);
 
-            if (passwordResetSecretKey == null)
+            if (string.IsNullOrEmpty(passwordResetSecretKey))
             {
                 _errorHandlingService.HandleConfigurationError();
                 return null;

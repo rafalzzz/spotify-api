@@ -42,7 +42,7 @@ namespace SpotifyApi.Services
             var refreshTokenSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.RefreshTokenSecretKey);
             var expires = DateTime.Now.AddDays(_refreshTokenSettings.TokenLifeTime);
 
-            if (refreshTokenSecretKey == null)
+            if (string.IsNullOrEmpty(refreshTokenSecretKey))
             {
                 var configurationError = _errorHandlingService.HandleConfigurationError();
                 return Result<string>.Failure(configurationError);
