@@ -77,5 +77,16 @@ namespace SpotifyApi.Controllers
                     _passwordResetCompleteService.HandlePasswordResetCompleteError
                 );
         }
+
+        [HttpGet("refresh-token/{token}")]
+        public ActionResult RefreshAccessToken([FromRoute] string token)
+        {
+            return _refreshTokenService.ValidateToken(token)
+                .Bind(_refreshTokenService.Generate)
+                .Match(
+                    Ok,
+                    _refreshTokenService.HandleRefreshTokenError
+                );
+        }
     }
 }

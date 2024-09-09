@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FluentValidation;
 using SpotifyApi.Classes;
@@ -17,6 +16,7 @@ namespace SpotifyApi.Services
         Result<User> CheckIfUserExists(PasswordReset passwordResetDto);
         Task<Result<bool>> GenerateAndSendPasswordResetToken(User user);
         public ActionResult HandlePasswordResetError(Error err);
+
     }
 
     public class PasswordResetService(
@@ -56,20 +56,19 @@ namespace SpotifyApi.Services
                 Result<User>.Failure(Error.WrongEmail);
         }
 
-        private static List<Claim> GetPasswordResetTokenClaims(string userEmail)
+        private static List<Claim> GetClaims(string userEmail)
         {
             List<Claim> claims =
             [
                 new Claim(ClaimTypes.Email, userEmail),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             ];
 
             return claims;
         }
 
-        private string? GeneratePasswordResetToken(string userEmail)
+        private string? Generate(string userEmail)
         {
-            var claims = GetPasswordResetTokenClaims(userEmail);
+            var claims = GetClaims(userEmail);
             var passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetTokenSecretKey);
 
             if (string.IsNullOrEmpty(passwordResetSecretKey))
@@ -123,7 +122,7 @@ namespace SpotifyApi.Services
         public async Task<Result<bool>> GenerateAndSendPasswordResetToken(User user)
         {
 
-            var token = GeneratePasswordResetToken(user.Email);
+            var token = Generate(user.Email);
 
 
             if (token == null)
