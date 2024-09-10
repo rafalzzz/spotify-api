@@ -11,5 +11,7 @@ namespace SpotifyApi.Utilities
         public static Error TokenHasExpired = new(ErrorType.TokenExpired, "Token has expired");
         public static Error InvalidToken = new(ErrorType.InvalidToken, "Invalid token");
         public static Error ApiItunesError = new(ErrorType.ApiItunes, "Error calling iTunes API");
+        public static Error ConfigurationError = new(ErrorType.ConfigurationError, "Missing secretKey");
+        public static Error WrongId = new(ErrorType.WrongId, "Incorrect user Id");
     }
 }

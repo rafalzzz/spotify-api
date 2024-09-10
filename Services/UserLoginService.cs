@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
+using SpotifyApi.Classes;
+using SpotifyApi.Entities;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
@@ -8,19 +10,24 @@ namespace SpotifyApi.Services
     public interface IUserLoginService
     {
         Result<LoginUser> ValidateLogin(LoginUser registerUserDto);
-        Result<LoginUser> CheckLoginAndPassword(LoginUser loginUserDto);
+        Result<User> CheckLoginAndPassword(LoginUser loginUserDto);
+        Result<TokenResult> GenerateTokens(User user);
         ActionResult HandleLoginError(Error err);
     }
 
     public class UserLoginService(
         IRequestValidatorService requestValidatorService,
         IValidator<LoginUser> loginUserValidator,
-        IUserService userService
+        IUserService userService,
+        IAccessTokenService accessTokenService,
+        IRefreshTokenService refreshTokenService
     ) : IUserLoginService
     {
         private readonly IRequestValidatorService _requestValidatorService = requestValidatorService;
         private readonly IValidator<LoginUser> _loginUserValidator = loginUserValidator;
         private readonly IUserService _userService = userService;
+        private readonly IAccessTokenService _accessTokenService = accessTokenService;
+        private readonly IRefreshTokenService _refreshTokenService = refreshTokenService;
 
         public Result<LoginUser> ValidateLogin(LoginUser loginUserDto)
         {
@@ -32,12 +39,33 @@ namespace SpotifyApi.Services
                 );
         }
 
-        public Result<LoginUser> CheckLoginAndPassword(LoginUser loginUserDto)
+        public Result<User> CheckLoginAndPassword(LoginUser loginUserDto)
         {
             var verifyUserResult = _userService.VerifyUser(loginUserDto);
 
-            return verifyUserResult.IsSuccess ? Result<LoginUser>.Success(loginUserDto) :
-                Result<LoginUser>.Failure(verifyUserResult.Error);
+            return verifyUserResult.IsSuccess ? Result<User>.Success(verifyUserResult.Value) :
+                Result<User>.Failure(verifyUserResult.Error);
+        }
+
+        public Result<TokenResult> GenerateTokens(User user)
+        {
+            var jwtTokenResult = _accessTokenService.Generate(user);
+            var refreshTokenResult = _refreshTokenService.Generate(user);
+
+            if (!jwtTokenResult.IsSuccess || !refreshTokenResult.IsSuccess)
+            {
+                return Result<TokenResult>.Failure(Error.ConfigurationError);
+            }
+
+            var saveRefreshTokenResult = _userService.SaveUserRefreshToken(user, refreshTokenResult.Value);
+
+            if (!saveRefreshTokenResult.IsSuccess)
+            {
+                return Result<TokenResult>.Failure(saveRefreshTokenResult.Error);
+            }
+
+            var tokenResult = new TokenResult(jwtTokenResult.Value, refreshTokenResult.Value);
+            return Result<TokenResult>.Success(tokenResult);
         }
 
         public ActionResult HandleLoginError(Error err)

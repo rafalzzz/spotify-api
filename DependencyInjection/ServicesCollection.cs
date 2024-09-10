@@ -9,6 +9,8 @@ namespace SpotifyApi.DependencyInjection
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IUserRegistrationService, UserRegistrationService>();
             services.AddTransient<IUserLoginService, UserLoginService>();
+            services.AddTransient<IAccessTokenService, AccessTokenService>();
+            services.AddTransient<IRefreshTokenService, RefreshTokenService>();
             services.AddTransient<IPasswordHasherService, PasswordHasherService>();
             services.AddTransient<IPasswordResetService, PasswordResetService>();
             services.AddTransient<ITracksService, TracksService>();
@@ -17,6 +19,7 @@ namespace SpotifyApi.DependencyInjection
             services.AddTransient<IPasswordResetCompleteService, PasswordResetCompleteService>();
             services.AddTransient<IRequestValidatorService, RequestValidatorService>();
             services.AddTransient<IErrorHandlingService, ErrorHandlingService>();
+            services.AddTransient<ICookiesService, CookiesService>();
 
             return services;
         }

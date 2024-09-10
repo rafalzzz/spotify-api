@@ -29,6 +29,11 @@ namespace SpotifyApi.Utilities
         [Description("InvalidToken")]
         InvalidToken = 11,
         [Description("ApiItunes")]
-        ApiItunes = 12
+        ApiItunes = 12,
+        [Description("ConfigurationError")]
+        ConfigurationError = 13,
+        [Description("WrongId")]
+        WrongId = 14
+
     }
 }

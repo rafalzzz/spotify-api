@@ -10,9 +10,11 @@ namespace SpotifyApi.Services
         Result<User> CreateUser(RegisterUser registerUserDto);
         Result<User> VerifyUser(LoginUser loginUserDto);
         public Result<User> GetUserByEmail(string email);
+        public Result<User> GetUserById(string id);
         Result<User> GetUserByLogin(string login);
         Result<bool> SavePasswordResetToken(string token, User user);
         Result<bool> ChangeUserPassword(User user, string token, string password);
+        Result<bool> SaveUserRefreshToken(User user, string refreshToken);
     }
 
     public class UserService(
@@ -87,6 +89,26 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "get user by email";
+                return HandleUserException<User>(logErrorAction, exception);
+            }
+        }
+
+        public Result<User> GetUserById(string id)
+        {
+            try
+            {
+                User? user = _dbContext.Users.FirstOrDefault(user => user.Id == int.Parse(id));
+
+                if (user is null)
+                {
+                    return Result<User>.Failure(Error.WrongId);
+                }
+
+                return Result<User>.Success(user);
+            }
+            catch (Exception exception)
+            {
+                var logErrorAction = "get user by id";
                 return HandleUserException<User>(logErrorAction, exception);
             }
         }
@@ -196,6 +218,22 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "change user password";
+                return HandleUserException<bool>(logErrorAction, exception);
+            }
+        }
+
+        public Result<bool> SaveUserRefreshToken(User user, string refreshToken)
+        {
+            try
+            {
+                user.RefreshToken = refreshToken;
+                _dbContext.SaveChanges();
+
+                return Result<bool>.Success(true);
+            }
+            catch (Exception exception)
+            {
+                var logErrorAction = "save user refresh token";
                 return HandleUserException<bool>(logErrorAction, exception);
             }
         }

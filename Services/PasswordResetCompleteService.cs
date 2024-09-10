@@ -1,4 +1,3 @@
-using System.Security;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +24,7 @@ namespace SpotifyApi.Services
         IValidator<PasswordResetComplete> passwordResetCompleteValidator,
         IUserService userService,
         IJwtService jwtService,
-        IOptions<PasswordResetSettings> passwordResetSettings,
+        IOptions<JwtSettings> passwordResetTokenSettings,
         IErrorHandlingService errorHandlingService
         ) : IPasswordResetCompleteService
     {
@@ -33,7 +32,7 @@ namespace SpotifyApi.Services
         private readonly IValidator<PasswordResetComplete> _passwordResetCompleteValidator = passwordResetCompleteValidator;
         private readonly IUserService _userService = userService;
         private readonly IJwtService _jwtService = jwtService;
-        private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
+        private readonly JwtSettings _passwordResetSettings = passwordResetTokenSettings.Value;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         public Result<PasswordResetComplete> ValidatePasswordResetCompleteRequest(PasswordResetComplete passwordResetCompleteDto)
@@ -49,12 +48,12 @@ namespace SpotifyApi.Services
 
         private static string? GetPasswordResetSecretKey()
         {
-            return Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetSecretKey);
+            return Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetTokenSecretKey);
         }
 
         private SecurityKey? GetSigningCredentialsKey(string? secretKey)
         {
-            if (secretKey == null)
+            if (string.IsNullOrEmpty(secretKey))
             {
                 return null;
             }
@@ -81,38 +80,6 @@ namespace SpotifyApi.Services
             };
         }
 
-        private Result<JwtSecurityToken> ValidateJwtToken(string token, TokenValidationParameters? tokenValidationParameters)
-        {
-            try
-            {
-                JwtSecurityTokenHandler tokenHandler = new();
-                tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
-
-                if (securityToken is not JwtSecurityToken jwtSecurityToken ||
-                    !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return Result<JwtSecurityToken>.Failure(Error.InvalidToken);
-                }
-
-                return Result<JwtSecurityToken>.Success(jwtSecurityToken);
-            }
-            catch (SecurityTokenExpiredException)
-            {
-                Console.WriteLine($"Token has expired. Time: {DateTime.Now}.");
-                return Result<JwtSecurityToken>.Failure(Error.TokenHasExpired);
-            }
-            catch (SecurityException exception)
-            {
-                var error = HandleTokenValidationError("reset password token validation error", exception);
-                return Result<JwtSecurityToken>.Failure(error);
-            }
-            catch (Exception exception)
-            {
-                var error = HandleTokenValidationError("validation token", exception);
-                return Result<JwtSecurityToken>.Failure(error);
-            }
-        }
-
         private Result<string> GetEmailFromJwtToken(JwtSecurityToken jwtSecurityToken)
         {
             var emailClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
@@ -131,7 +98,7 @@ namespace SpotifyApi.Services
             var key = GetSigningCredentialsKey(passwordResetSecretKey);
             var tokenValidationParameters = CreateTokenValidationParameters(key);
 
-            return ValidateJwtToken(token, tokenValidationParameters)
+            return _jwtService.ValidateJwtToken(token, tokenValidationParameters)
                 .Bind(GetEmailFromJwtToken)
                 .Bind(_userService.GetUserByEmail);
         }

@@ -6,8 +6,17 @@ namespace SpotifyApi.DependencyInjection
     {
         public static IServiceCollection AddConfigurations(this IServiceCollection services, IConfiguration configuration)
         {
-            var passwordResetSettings = configuration.GetSection("PasswordResetSettings");
-            services.Configure<PasswordResetSettings>(passwordResetSettings);
+            var servicesSettings = configuration.GetSection("Services");
+            services.Configure<ServiceSettings>(servicesSettings);
+
+            var passwordResetTokenSettings = configuration.GetSection("PasswordResetTokenSettings");
+            services.Configure<JwtSettings>(passwordResetTokenSettings);
+
+            var accessTokenSettings = configuration.GetSection("AccessTokenSettings");
+            services.Configure<JwtSettings>(accessTokenSettings);
+
+            var refreshTokenSettings = configuration.GetSection("RefreshTokenSettings");
+            services.Configure<JwtSettings>(refreshTokenSettings);
 
             return services;
         }

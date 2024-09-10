@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using FluentValidation;
 using SpotifyApi.Classes;
@@ -17,6 +16,7 @@ namespace SpotifyApi.Services
         Result<User> CheckIfUserExists(PasswordReset passwordResetDto);
         Task<Result<bool>> GenerateAndSendPasswordResetToken(User user);
         public ActionResult HandlePasswordResetError(Error err);
+
     }
 
     public class PasswordResetService(
@@ -24,7 +24,7 @@ namespace SpotifyApi.Services
         IValidator<PasswordReset> passwordResetValidator,
         IUserService userService,
         IJwtService jwtService,
-        IOptions<PasswordResetSettings> passwordResetSettings,
+        IOptions<JwtSettings> passwordResetTokenSettings,
         IEmailService emailService,
         IErrorHandlingService errorHandlingService
     ) : IPasswordResetService
@@ -33,7 +33,7 @@ namespace SpotifyApi.Services
         private readonly IValidator<PasswordReset> _passwordResetValidator = passwordResetValidator;
         private readonly IUserService _userService = userService;
         private readonly IJwtService _jwtService = jwtService;
-        private readonly PasswordResetSettings _passwordResetSettings = passwordResetSettings.Value;
+        private readonly JwtSettings _passwordResetSettings = passwordResetTokenSettings.Value;
         private readonly IEmailService _emailService = emailService;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
@@ -56,24 +56,24 @@ namespace SpotifyApi.Services
                 Result<User>.Failure(Error.WrongEmail);
         }
 
-        private static List<Claim> GetPasswordResetTokenClaims(string userEmail)
+        private static List<Claim> GetClaims(string userEmail)
         {
             List<Claim> claims =
             [
                 new Claim(ClaimTypes.Email, userEmail),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             ];
 
             return claims;
         }
 
-        private string? GeneratePasswordResetToken(string userEmail)
+        private string? Generate(string userEmail)
         {
-            var claims = GetPasswordResetTokenClaims(userEmail);
-            var passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetSecretKey);
+            var claims = GetClaims(userEmail);
+            var passwordResetSecretKey = Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetTokenSecretKey);
 
-            if (passwordResetSecretKey == null)
+            if (string.IsNullOrEmpty(passwordResetSecretKey))
             {
+                _errorHandlingService.HandleConfigurationError();
                 return null;
             }
 
@@ -122,7 +122,7 @@ namespace SpotifyApi.Services
         public async Task<Result<bool>> GenerateAndSendPasswordResetToken(User user)
         {
 
-            var token = GeneratePasswordResetToken(user.Email);
+            var token = Generate(user.Email);
 
 
             if (token == null)

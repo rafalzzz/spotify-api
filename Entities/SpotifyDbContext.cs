@@ -44,8 +44,6 @@ namespace SpotifyApi.Entities
                     .AddJsonFile("appsettings.json")
                     .Build();
 
-                Env.Load();
-
                 var connectionString = Environment.GetEnvironmentVariable(EnvironmentVariables.ConnectionString);
 
                 if (string.IsNullOrEmpty(connectionString))
