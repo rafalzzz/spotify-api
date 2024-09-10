@@ -75,8 +75,8 @@ namespace SpotifyApi.Services
 
         public Result<User> ValidateToken(string token)
         {
-            var passwordResetSecretKey = GetPasswordResetSecretKey();
-            var key = GetSigningCredentialsKey(passwordResetSecretKey);
+            var refreshTokenSecretKey = GetRefreshTokenSecretKey();
+            var key = GetSigningCredentialsKey(refreshTokenSecretKey);
             var tokenValidationParameters = CreateTokenValidationParameters(key);
 
             return jwtService.ValidateJwtToken(token, tokenValidationParameters)
@@ -84,9 +84,9 @@ namespace SpotifyApi.Services
                 .Bind(_userService.GetUserById);
         }
 
-        private static string? GetPasswordResetSecretKey()
+        private static string? GetRefreshTokenSecretKey()
         {
-            return Environment.GetEnvironmentVariable(EnvironmentVariables.PasswordResetTokenSecretKey);
+            return Environment.GetEnvironmentVariable(EnvironmentVariables.RefreshTokenSecretKey);
         }
 
         private SecurityKey? GetSigningCredentialsKey(string? secretKey)
