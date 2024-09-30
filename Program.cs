@@ -14,17 +14,21 @@ builder.Services
     .AddServices()
     .AddValidators()
     .AddJwtAuthentication(builder.Configuration)
+    .AddSwaggerConfiguration()
     .AddControllers();
 
 var app = builder.Build();
 
+app.UseSwaggerConfiguration(app.Environment);
+
 app.UsePathBase("/api");
 app.UseHttpsRedirection();
+
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.UseRouting();
 
 app.Run();
