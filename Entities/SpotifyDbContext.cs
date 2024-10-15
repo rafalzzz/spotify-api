@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using DotNetEnv;
-using SpotifyApi.Variables;
 using SpotifyApi.Services;
 using SpotifyApi.Utilities;
+using SpotifyApi.Variables;
 
 namespace SpotifyApi.Entities
 {
@@ -11,8 +10,9 @@ namespace SpotifyApi.Entities
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService ?? throw new ArgumentNullException(nameof(errorHandlingService));
 
         public DbSet<User> Users { get; set; }
+        public DbSet<Playlist> Playlists { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        private static void ConfigureUserEntity(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>()
                 .Property(entity => entity.Offers)
@@ -27,12 +27,40 @@ namespace SpotifyApi.Entities
                 .HasConversion<int>();
 
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Email)
+                .HasIndex(user => user.Email)
                 .IsUnique();
 
             modelBuilder.Entity<User>()
-                .HasIndex(u => u.Nickname)
+                .HasIndex(user => user.Nickname)
                 .IsUnique();
+        }
+
+        private static void ConfigurePlaylistEntity(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Playlist>()
+                .HasOne(playlist => playlist.Owner)
+                .WithMany(user => user.CreatedPlaylists)
+                .HasForeignKey(playlist => playlist.OwnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Playlist>()
+                .HasMany(playlist => playlist.Collaborators)
+                .WithMany(user => user.CollaboratingPlaylists)
+                .UsingEntity(joinEntity => joinEntity.ToTable("PlaylistCoCreators"));
+
+            modelBuilder.Entity<Playlist>()
+                .HasMany(playlist => playlist.FavoritedByUsers)
+                .WithMany(user => user.FavoritePlaylists)
+                .UsingEntity(joinEntity => joinEntity.ToTable("UserFavoritePlaylists"));
+
+            modelBuilder.Entity<Playlist>()
+                .Property(playlist => playlist.IsPublic)
+                .HasConversion<int>();
+        }
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            ConfigureUserEntity(modelBuilder);
+            ConfigurePlaylistEntity(modelBuilder);
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
