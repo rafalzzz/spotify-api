@@ -79,7 +79,7 @@ namespace SpotifyApi.Services
             var key = GetSigningCredentialsKey(refreshTokenSecretKey);
             var tokenValidationParameters = CreateTokenValidationParameters(key);
 
-            return jwtService.ValidateJwtToken(token, tokenValidationParameters)
+            return _jwtService.ValidateJwtToken(token, tokenValidationParameters)
                 .Bind(GetIdFromJwtToken)
                 .Bind(_userService.GetUserById);
         }

@@ -62,8 +62,8 @@ namespace SpotifyApi.Services
                     .EnumerateArray()
                     .Select(trackJson => new Track
                     {
-                        TrackName = trackJson.GetProperty("trackName").GetString(),
-                        ArtistName = trackJson.GetProperty("artistName").GetString(),
+                        TrackName = trackJson.GetProperty("trackName").GetString() ?? "Unknown track",
+                        ArtistName = trackJson.GetProperty("artistName").GetString() ?? "Unknown artist",
                     })
                     .ToList();
 

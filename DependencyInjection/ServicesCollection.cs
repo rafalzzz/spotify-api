@@ -20,6 +20,8 @@ namespace SpotifyApi.DependencyInjection
             services.AddTransient<IRequestValidatorService, RequestValidatorService>();
             services.AddTransient<IErrorHandlingService, ErrorHandlingService>();
             services.AddTransient<ICookiesService, CookiesService>();
+            services.AddTransient<IPlaylistService, PlaylistService>();
+            services.AddTransient<IPlaylistCreationService, PlaylistCreationService>();
 
             return services;
         }
