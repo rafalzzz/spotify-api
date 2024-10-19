@@ -48,8 +48,8 @@ namespace SpotifyApi.Services
             return err.Type switch
             {
                 ErrorType.Validation => new BadRequestObjectResult(err),
-                ErrorType.NotFound => new NotFoundObjectResult(err),
-                ErrorType.Unauthorized => new UnauthorizedObjectResult(err),
+                ErrorType.NotFound => new NotFoundObjectResult(err.Description),
+                ErrorType.Unauthorized => new UnauthorizedObjectResult(err.Description),
                 _ => new ObjectResult("An unexpected error occurred: " + err.Description)
                 {
                     StatusCode = StatusCodes.Status500InternalServerError
