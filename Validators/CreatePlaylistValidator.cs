@@ -23,8 +23,7 @@ namespace SpotifyApi.Validators
             RuleFor(requestBody => requestBody.IsPublic)
             .Cascade(CascadeMode.Stop)
             .NotNull()
-            .WithMessage("IsPublic is required")
-            .IsBoolean();
+            .WithMessage("IsPublic is required");
         }
     }
 }

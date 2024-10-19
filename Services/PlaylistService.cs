@@ -6,7 +6,7 @@ namespace SpotifyApi.Services
 {
     public interface IPlaylistService
     {
-        Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto);
+        Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
         Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
     }
 
@@ -18,7 +18,7 @@ namespace SpotifyApi.Services
         private readonly SpotifyDbContext _dbContext = dbContext;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
-        public Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto)
+        public Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
         {
             try
             {
@@ -28,6 +28,7 @@ namespace SpotifyApi.Services
                     Name = createPlaylistDto.Name,
                     Description = createPlaylistDto.Description,
                     IsPublic = createPlaylistDto.IsPublic,
+                    OwnerId = userId
                 };
 
                 _dbContext.Playlists.Add(newPlaylist);

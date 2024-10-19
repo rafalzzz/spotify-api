@@ -19,19 +19,26 @@ namespace SpotifyApi.Controllers
         private readonly IPlaylistCreationService _playlistCreationService = playlistCreationService;
         private readonly IPlaylistEditionService _playlistEditionService = playlistEditionService;
 
-        [HttpPost]
+        [HttpPost("create")]
         public ActionResult Create([FromBody] CreatePlaylist createPlaylistDto)
         {
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
             return _playlistCreationService.ValidatePlaylistCreation(createPlaylistDto)
-                .Bind(_ => _playlistCreationService.CreatePlaylist(createPlaylistDto))
+                .Bind(_ => _playlistCreationService.CreatePlaylist(createPlaylistDto, int.Parse(userId)))
                 .Match(
                     playlist => Created(string.Empty, playlist),
                     _playlistCreationService.HandlePlaylistCreationError
                 );
         }
 
-        [HttpPut("{playlistId}")]
-        public IActionResult EditPlaylist(int playlistId, [FromBody] EditPlaylist editPlaylistDto)
+        [HttpPut("edit/{playlistId}")]
+        public IActionResult EditPlaylist([FromRoute] int playlistId, [FromBody] EditPlaylist editPlaylistDto)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
