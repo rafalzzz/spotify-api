@@ -33,7 +33,11 @@ namespace SpotifyApi.Utilities
         [Description("ConfigurationError")]
         ConfigurationError = 13,
         [Description("WrongId")]
-        WrongId = 14
+        WrongId = 14,
+        [Description("NotFound")]
+        NotFound = 15,
+        [Description("Unathorized")]
+        Unauthorized = 16
 
     }
 }
