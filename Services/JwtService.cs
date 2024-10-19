@@ -59,7 +59,6 @@ namespace SpotifyApi.Services
             }
             catch (SecurityTokenExpiredException)
             {
-                Console.WriteLine($"Token has expired. Time: {DateTime.Now}.");
                 return Result<JwtSecurityToken>.Failure(Error.TokenHasExpired);
             }
             catch (SecurityException exception)
