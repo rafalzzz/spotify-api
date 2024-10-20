@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SpotifyApi.Variables;
+using System.IdentityModel.Tokens.Jwt;
 using SpotifyApi.Requests;
 using SpotifyApi.Services;
 using SpotifyApi.Utilities;
-using System.IdentityModel.Tokens.Jwt;
+using SpotifyApi.Variables;
 
 namespace SpotifyApi.Controllers
 {
