@@ -9,13 +9,13 @@ namespace SpotifyApi.DependencyInjection
     {
         public static IServiceCollection AddValidators(this IServiceCollection services)
         {
-            services.AddScoped<IValidator<RegisterUser>, RegisterUserValidator>();
-            services.AddScoped<IValidator<LoginUser>, LoginUserValidator>();
-            services.AddScoped<IValidator<PasswordReset>, PasswordResetValidator>();
-            services.AddScoped<IValidator<PasswordResetComplete>, PasswordResetCompleteValidator>();
-            services.AddScoped<IValidator<SearchTracksParams>, SearchTracksParamsValidator>();
-            services.AddScoped<IValidator<CreatePlaylist>, CreatePlaylistValidator>();
-            services.AddScoped<IValidator<EditPlaylist>, EditPlaylistValidator>();
+            services.AddTransient<IValidator<RegisterUser>, RegisterUserValidator>();
+            services.AddTransient<IValidator<LoginUser>, LoginUserValidator>();
+            services.AddTransient<IValidator<PasswordReset>, PasswordResetValidator>();
+            services.AddTransient<IValidator<PasswordResetComplete>, PasswordResetCompleteValidator>();
+            services.AddTransient<IValidator<SearchTracksParams>, SearchTracksParamsValidator>();
+            services.AddTransient<IValidator<CreatePlaylist>, CreatePlaylistValidator>();
+            services.AddTransient<IValidator<EditPlaylist>, EditPlaylistValidator>();
 
             return services;
         }
