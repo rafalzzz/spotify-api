@@ -47,9 +47,6 @@ namespace SpotifyApi.Services
                 var url = $"{_serviceSettings.ItunesApi}/search?term={validParams.Term}&entity={validParams.Entity}&limit={validParams.Limit}&offset={validParams.Offset}";
                 var response = await _httpClient.GetAsync(url);
 
-                Console.WriteLine(url);
-                Console.WriteLine(response);
-
                 if (!response.IsSuccessStatusCode)
                 {
                     return Result<IEnumerable<Track>>.Failure(Error.ApiItunesError);
@@ -62,8 +59,8 @@ namespace SpotifyApi.Services
                     .EnumerateArray()
                     .Select(trackJson => new Track
                     {
-                        TrackName = trackJson.GetProperty("trackName").GetString(),
-                        ArtistName = trackJson.GetProperty("artistName").GetString(),
+                        TrackName = trackJson.GetProperty("trackName").GetString() ?? "Unknown track",
+                        ArtistName = trackJson.GetProperty("artistName").GetString() ?? "Unknown artist",
                     })
                     .ToList();
 

@@ -15,5 +15,8 @@ namespace SpotifyApi.Entities
         public bool Terms { get; set; }
         public string RefreshToken { get; set; } = null!;
         public string PasswordResetToken { get; set; } = null!;
+        public ICollection<Playlist> CreatedPlaylists { get; set; } = []; // Created playlists by user arr
+        public ICollection<Playlist> CollaboratingPlaylists { get; set; } = []; // Playlists to which the user has been added as a collaborator
+        public ICollection<Playlist> FavoritePlaylists { get; set; } = []; // // Playlists added to favorites
     }
 }

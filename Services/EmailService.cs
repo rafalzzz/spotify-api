@@ -37,7 +37,7 @@ namespace SpotifyApi.Services
                 };
 
                 using SmtpClient? client = new();
-                await client.ConnectAsync(smtpServer, int.Parse(smtpPort), useSsl);
+                await client.ConnectAsync(smtpServer, int.Parse(smtpPort!), useSsl);
                 await client.AuthenticateAsync(senderEmail, senderEmailPassword);
                 await client.SendAsync(emailMessage);
                 await client.DisconnectAsync(true);

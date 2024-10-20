@@ -14,6 +14,8 @@ namespace SpotifyApi.DependencyInjection
             services.AddScoped<IValidator<PasswordReset>, PasswordResetValidator>();
             services.AddScoped<IValidator<PasswordResetComplete>, PasswordResetCompleteValidator>();
             services.AddScoped<IValidator<SearchTracksParams>, SearchTracksParamsValidator>();
+            services.AddScoped<IValidator<CreatePlaylist>, CreatePlaylistValidator>();
+            services.AddScoped<IValidator<EditPlaylist>, EditPlaylistValidator>();
 
             return services;
         }
