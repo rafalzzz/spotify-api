@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using SpotifyApi.Entities;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
@@ -8,6 +9,8 @@ namespace SpotifyApi.Services
     {
         Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
         Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
+        Result<int> DeletePlaylist(int playlistId, int userId);
+        ActionResult HandlePlaylistRequestError(Error err);
     }
 
     public class PlaylistService(
@@ -47,7 +50,9 @@ namespace SpotifyApi.Services
         {
             try
             {
-                var playlist = _dbContext.Playlists.FirstOrDefault(p => p.Id == playlistId);
+                var playlist = _dbContext.Playlists.FirstOrDefault(
+                        playlist => playlist.Id == playlistId
+                    );
 
                 if (playlist == null)
                 {
@@ -74,6 +79,36 @@ namespace SpotifyApi.Services
             }
         }
 
+        public Result<int> DeletePlaylist(int playlistId, int userId)
+        {
+            try
+            {
+                var playlist = _dbContext.Playlists.FirstOrDefault(
+                        playlist => playlist.Id == playlistId
+                    );
+
+                if (playlist == null)
+                {
+                    return Result<int>.Failure(Error.NotFound);
+                }
+
+                if (playlist.OwnerId != userId)
+                {
+                    return Result<int>.Failure(Error.Unauthorized);
+                }
+
+                _dbContext.Playlists.Remove(playlist);
+                _dbContext.SaveChanges();
+
+                return Result<int>.Success(playlistId);
+            }
+            catch (Exception exception)
+            {
+                var logErrorAction = "delete playlist";
+                return HandlePlaylistException<int>(logErrorAction, exception);
+            }
+        }
+
         private Result<ResultType> HandlePlaylistException<ResultType>(string logErrorAction, Exception exception)
         {
             var error = _errorHandlingService.HandleDatabaseError(
@@ -82,6 +117,20 @@ namespace SpotifyApi.Services
             );
 
             return Result<ResultType>.Failure(error);
+        }
+
+        public ActionResult HandlePlaylistRequestError(Error err)
+        {
+            return err.Type switch
+            {
+                ErrorType.Validation => new BadRequestObjectResult(err),
+                ErrorType.NotFound => new NotFoundObjectResult(err.Description),
+                ErrorType.Unauthorized => new UnauthorizedObjectResult(err.Description),
+                _ => new ObjectResult("An unexpected error occurred: " + err.Description)
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                }
+            };
         }
     }
 }

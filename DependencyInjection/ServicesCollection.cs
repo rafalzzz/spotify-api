@@ -6,23 +6,24 @@ namespace SpotifyApi.DependencyInjection
     {
         public static IServiceCollection AddServices(this IServiceCollection services)
         {
-            services.AddTransient<IUserService, UserService>();
-            services.AddTransient<IUserRegistrationService, UserRegistrationService>();
-            services.AddTransient<IUserLoginService, UserLoginService>();
-            services.AddTransient<IAccessTokenService, AccessTokenService>();
-            services.AddTransient<IRefreshTokenService, RefreshTokenService>();
-            services.AddTransient<IPasswordHasherService, PasswordHasherService>();
-            services.AddTransient<IPasswordResetService, PasswordResetService>();
-            services.AddTransient<ITracksService, TracksService>();
-            services.AddTransient<IJwtService, JwtService>();
-            services.AddTransient<IEmailService, EmailService>();
-            services.AddTransient<IPasswordResetCompleteService, PasswordResetCompleteService>();
-            services.AddTransient<IRequestValidatorService, RequestValidatorService>();
-            services.AddTransient<IErrorHandlingService, ErrorHandlingService>();
-            services.AddTransient<ICookiesService, CookiesService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserRegistrationService, UserRegistrationService>();
+            services.AddScoped<IUserLoginService, UserLoginService>();
+            services.AddScoped<IAccessTokenService, AccessTokenService>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<IPasswordResetService, PasswordResetService>();
+            services.AddScoped<ITracksService, TracksService>();
+            services.AddScoped<IJwtService, JwtService>();
+            services.AddScoped<IPasswordResetCompleteService, PasswordResetCompleteService>();
+            services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
             services.AddScoped<IPlaylistService, PlaylistService>();
             services.AddScoped<IPlaylistCreationService, PlaylistCreationService>();
             services.AddScoped<IPlaylistEditionService, PlaylistEditionService>();
+
+            services.AddTransient<IRequestValidatorService, RequestValidatorService>();
+            services.AddTransient<IPasswordHasherService, PasswordHasherService>();
+            services.AddTransient<ICookiesService, CookiesService>();
+            services.AddTransient<IEmailService, EmailService>();
 
             return services;
         }

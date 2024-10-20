@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
 using SpotifyApi.Entities;
 using SpotifyApi.Requests;
@@ -10,7 +9,6 @@ namespace SpotifyApi.Services
     {
         Result<EditPlaylist> ValidatePlaylistEdition(EditPlaylist createPlaylistDto);
         Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
-        ActionResult HandlePlaylistEditionError(Error err);
     }
 
     public class PlaylistEditionService(
@@ -41,20 +39,6 @@ namespace SpotifyApi.Services
             return editPlaylistResult.IsSuccess ?
                 Result<Playlist>.Success(editPlaylistResult.Value) :
                 Result<Playlist>.Failure(editPlaylistResult.Error);
-        }
-
-        public ActionResult HandlePlaylistEditionError(Error err)
-        {
-            return err.Type switch
-            {
-                ErrorType.Validation => new BadRequestObjectResult(err),
-                ErrorType.NotFound => new NotFoundObjectResult(err.Description),
-                ErrorType.Unauthorized => new UnauthorizedObjectResult(err.Description),
-                _ => new ObjectResult("An unexpected error occurred: " + err.Description)
-                {
-                    StatusCode = StatusCodes.Status500InternalServerError
-                }
-            };
         }
     }
 }

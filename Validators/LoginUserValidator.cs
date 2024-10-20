@@ -1,6 +1,6 @@
 using FluentValidation;
-using SpotifyApi.Requests;
 using SpotifyApi.Extensions;
+using SpotifyApi.Requests;
 
 namespace SpotifyApi.Validators
 {

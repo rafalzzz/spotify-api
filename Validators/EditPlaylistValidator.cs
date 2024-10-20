@@ -18,10 +18,6 @@ namespace SpotifyApi.Validators
                 .MaximumLength(300)
                 .When(requestBody => requestBody.Description != null)
                 .WithMessage("Description cannot be longer than 300 characters");
-
-            RuleFor(requestBody => requestBody.IsPublic)
-                   .Must(value => value != null)
-                   .WithMessage("IsPublic must be a boolean value.");
         }
     }
 }
