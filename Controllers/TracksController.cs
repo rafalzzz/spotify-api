@@ -14,7 +14,7 @@ namespace SpotifyApi.Controllers
     {
         private readonly ITracksService _tracksService = tracksService;
 
-        [HttpGet("search")]
+        [HttpGet()]
         public async Task<IActionResult> SearchTracks([FromQuery] SearchTracksParams requestParams)
         {
 

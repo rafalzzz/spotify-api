@@ -117,11 +117,5 @@ namespace SpotifyApi.Services
                 }
             };
         }
-
-        private Error HandleTokenValidationError(string logErrorAction, Exception exception)
-        {
-            var initialErrorMessage = "Unexpected validation token error";
-            return _errorHandlingService.HandleError(exception, ErrorType.InvalidToken, logErrorAction, initialErrorMessage);
-        }
     }
 }
