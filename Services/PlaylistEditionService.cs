@@ -7,7 +7,7 @@ namespace SpotifyApi.Services
 {
     public interface IPlaylistEditionService
     {
-        Result<EditPlaylist> ValidatePlaylistEdition(EditPlaylist createPlaylistDto);
+        Result<EditPlaylist> ValidatePlaylistEdition(EditPlaylist editPlaylistDto);
         Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
     }
 
@@ -34,11 +34,8 @@ namespace SpotifyApi.Services
 
         public Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId)
         {
-            var editPlaylistResult = _playlistService.EditPlaylist(playlistId, editPlaylistDto, userId);
-
-            return editPlaylistResult.IsSuccess ?
-                Result<Playlist>.Success(editPlaylistResult.Value) :
-                Result<Playlist>.Failure(editPlaylistResult.Error);
+            return ValidatePlaylistEdition(editPlaylistDto)
+            .Bind(editPlaylist => _playlistService.EditPlaylist(playlistId, editPlaylist, userId));
         }
     }
 }

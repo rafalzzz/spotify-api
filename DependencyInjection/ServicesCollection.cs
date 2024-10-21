@@ -17,13 +17,14 @@ namespace SpotifyApi.DependencyInjection
             services.AddScoped<IPasswordResetCompleteService, PasswordResetCompleteService>();
             services.AddScoped<IErrorHandlingService, ErrorHandlingService>();
             services.AddScoped<IPlaylistService, PlaylistService>();
-            services.AddScoped<IPlaylistCreationService, PlaylistCreationService>();
-            services.AddScoped<IPlaylistEditionService, PlaylistEditionService>();
 
             services.AddTransient<IRequestValidatorService, RequestValidatorService>();
             services.AddTransient<IPasswordHasherService, PasswordHasherService>();
             services.AddTransient<ICookiesService, CookiesService>();
             services.AddTransient<IEmailService, EmailService>();
+            services.AddTransient<IPlaylistCreationService, PlaylistCreationService>();
+            services.AddTransient<IPlaylistEditionService, PlaylistEditionService>();
+            services.AddTransient<IAddCollaboratorService, AddCollaboratorService>();
 
             return services;
         }

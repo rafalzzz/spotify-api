@@ -81,7 +81,7 @@ namespace SpotifyApi.Services
 
             return _jwtService.ValidateJwtToken(token, tokenValidationParameters)
                 .Bind(GetIdFromJwtToken)
-                .Bind(_userService.GetUserById);
+                .Bind(userId => _userService.GetUserById(int.Parse(userId)));
         }
 
         private static string? GetRefreshTokenSecretKey()
@@ -137,7 +137,7 @@ namespace SpotifyApi.Services
                 ErrorType.Validation => new BadRequestObjectResult(error),
                 ErrorType.InvalidToken => new BadRequestObjectResult(error.Description),
                 ErrorType.TokenExpired => new BadRequestObjectResult(error.Description),
-                ErrorType.WrongId => new BadRequestObjectResult(Error.WrongId.Description),
+                ErrorType.WrongUserId => new BadRequestObjectResult(Error.WrongUserId.Description),
                 _ => new ObjectResult("An unexpected error occurred: " + error.Description)
                 {
                     StatusCode = StatusCodes.Status500InternalServerError

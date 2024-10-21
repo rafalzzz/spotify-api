@@ -32,10 +32,10 @@ namespace SpotifyApi.Utilities
         ApiItunes = 12,
         [Description("ConfigurationError")]
         ConfigurationError = 13,
-        [Description("WrongId")]
-        WrongId = 14,
-        [Description("NotFound")]
-        NotFound = 15,
+        [Description("WrongUserId")]
+        WrongUserId = 14,
+        [Description("UserNotFound")]
+        WrongPlaylistId = 15,
         [Description("Unathorized")]
         Unauthorized = 16
 
