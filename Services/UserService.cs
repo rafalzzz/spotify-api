@@ -10,7 +10,7 @@ namespace SpotifyApi.Services
         Result<User> CreateUser(RegisterUser registerUserDto);
         Result<User> VerifyUser(LoginUser loginUserDto);
         public Result<User> GetUserByEmail(string email);
-        public Result<User> GetUserById(string id);
+        public Result<User> GetUserById(int id);
         Result<User> GetUserByLogin(string login);
         Result<bool> SavePasswordResetToken(string token, User user);
         Result<bool> ChangeUserPassword(User user, string token, string password);
@@ -93,15 +93,15 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<User> GetUserById(string id)
+        public Result<User> GetUserById(int id)
         {
             try
             {
-                User? user = _dbContext.Users.FirstOrDefault(user => user.Id == int.Parse(id));
+                User? user = _dbContext.Users.FirstOrDefault(user => user.Id == id);
 
                 if (user is null)
                 {
-                    return Result<User>.Failure(Error.WrongId);
+                    return Result<User>.Failure(Error.WrongUserId);
                 }
 
                 return Result<User>.Success(user);
