@@ -80,6 +80,8 @@ namespace SpotifyApi.Controllers
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
+            Console.WriteLine(userId);
+
             if (userId == null)
             {
                 return Unauthorized();
@@ -88,6 +90,23 @@ namespace SpotifyApi.Controllers
             return _addCollaboratorService.AddCollaborator(playlistId, addCollaboratorDto, int.Parse(userId))
                 .Match(
                     Ok,
+                    _playlistService.HandlePlaylistRequestError
+                );
+        }
+
+        [HttpDelete("{playlistId}/collaborators/{collaboratorId}")]
+        public IActionResult RemoveCollaborator([FromRoute] int playlistId, [FromRoute] int collaboratorId)
+        {
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            return _playlistService.RemoveCollaborator(playlistId, collaboratorId, int.Parse(userId))
+                .Match(
+                    _ => NoContent(),
                     _playlistService.HandlePlaylistRequestError
                 );
         }

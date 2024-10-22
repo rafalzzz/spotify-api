@@ -11,6 +11,7 @@ namespace SpotifyApi.Services
         Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
         Result<int> DeletePlaylist(int playlistId, int userId);
         Result<Playlist> AddCollaborator(int playlistId, int collaboratorId, int userId);
+        Result<Playlist> RemoveCollaborator(int playlistId, int collaboratorId, int userId);
         ActionResult HandlePlaylistRequestError(Error err);
     }
 
@@ -71,7 +72,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        private static Result<Playlist> VerifyUserOwner(Playlist playlist, int userId)
+        private static Result<Playlist> VerifyPlaylistOwner(Playlist playlist, int userId)
         {
             return playlist.OwnerId == userId ? Result<Playlist>.Success(playlist) :
                 Result<Playlist>.Failure(Error.Unauthorized);
@@ -99,7 +100,7 @@ namespace SpotifyApi.Services
         public Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId)
         {
             return GetPlaylistById(playlistId)
-            .Bind(playlist => VerifyUserOwner(playlist, userId))
+            .Bind(playlist => VerifyPlaylistOwner(playlist, userId))
             .Bind(playlist => UpdatePlaylistChanges(playlist, editPlaylistDto));
         }
 
@@ -122,22 +123,32 @@ namespace SpotifyApi.Services
         public Result<int> DeletePlaylist(int playlistId, int userId)
         {
             return GetPlaylistById(playlistId)
-            .Bind(playlist => VerifyUserOwner(playlist, userId))
+            .Bind(playlist => VerifyPlaylistOwner(playlist, userId))
             .Bind(DeletePlaylistFromDb);
         }
 
-        private Result<Playlist> AddCollaboratorToPlaylist(Playlist playlist, int collaboratorId)
+        private Result<User> GetCollaboratorById(int collaboratorId)
         {
-            var userResult = _userService.GetUserById(collaboratorId);
+            var collaboratorResult = _userService.GetUserById(collaboratorId);
 
-            if (!userResult.IsSuccess)
-            {
-                Result<Playlist>.Failure(Error.WrongUserId);
-            }
+            return collaboratorResult.IsSuccess ?
+                Result<User>.Success(collaboratorResult.Value) :
+                Result<User>.Failure(Error.WrongUserId);
 
+        }
+
+        private static Result<User> IsCollaboratorNotAdded(Playlist playlist, User collaborator)
+        {
+            return !playlist.Collaborators.Contains(collaborator) ?
+                Result<User>.Success(collaborator) :
+                Result<User>.Failure(Error.WrongUserId);
+        }
+
+        private Result<Playlist> AddCollaboratorToPlaylist(Playlist playlist, User collaborator)
+        {
             try
             {
-                playlist.Collaborators.Add(userResult.Value);
+                playlist.Collaborators.Add(collaborator);
                 _dbContext.SaveChanges();
 
                 return Result<Playlist>.Success(playlist);
@@ -151,9 +162,59 @@ namespace SpotifyApi.Services
 
         public Result<Playlist> AddCollaborator(int playlistId, int collaboratorId, int userId)
         {
-            return GetPlaylistById(playlistId)
-                .Bind(playlist => VerifyUserOwner(playlist, userId))
-                .Bind(playlist => AddCollaboratorToPlaylist(playlist, collaboratorId));
+            var playlistResult = GetPlaylistById(playlistId);
+
+            if (!playlistResult.IsSuccess)
+            {
+                return Result<Playlist>.Failure(playlistResult.Error);
+            }
+
+            var playlist = playlistResult.Value;
+
+            return VerifyPlaylistOwner(playlist, userId)
+                .Bind(_ => GetCollaboratorById(collaboratorId))
+                .Bind(collaborator => IsCollaboratorNotAdded(playlist, collaborator))
+                .Bind(collaborator => AddCollaboratorToPlaylist(playlist, collaborator));
+        }
+
+        private static Result<User> IsCollaboratorAdded(Playlist playlist, User collaborator)
+        {
+            return playlist.Collaborators.Contains(collaborator) ?
+                Result<User>.Success(collaborator) :
+                Result<User>.Failure(Error.WrongUserId);
+        }
+
+        private Result<Playlist> RemoveCollaboratorFromPlaylist(Playlist playlist, User collaborator)
+        {
+            try
+            {
+                playlist.Collaborators.Remove(collaborator);
+                _dbContext.SaveChanges();
+
+                return Result<Playlist>.Success(playlist);
+            }
+            catch (Exception exception)
+            {
+                var logErrorAction = "remove collaborator";
+                return HandlePlaylistException<Playlist>(logErrorAction, exception);
+            }
+        }
+
+        public Result<Playlist> RemoveCollaborator(int playlistId, int collaboratorId, int userId)
+        {
+            var playlistResult = GetPlaylistById(playlistId);
+
+            if (!playlistResult.IsSuccess)
+            {
+                return Result<Playlist>.Failure(playlistResult.Error);
+            }
+
+            var playlist = playlistResult.Value;
+
+            return VerifyPlaylistOwner(playlist, userId)
+                .Bind(_ => GetCollaboratorById(collaboratorId))
+                .Bind(collaborator => IsCollaboratorAdded(playlist, collaborator))
+                .Bind(collaborator => RemoveCollaboratorFromPlaylist(playlist, collaborator));
         }
 
         private Result<ResultType> HandlePlaylistException<ResultType>(string logErrorAction, Exception exception)
