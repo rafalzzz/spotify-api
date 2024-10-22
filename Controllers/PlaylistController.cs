@@ -80,8 +80,6 @@ namespace SpotifyApi.Controllers
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
-            Console.WriteLine(userId);
-
             if (userId == null)
             {
                 return Unauthorized();
