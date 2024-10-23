@@ -1,7 +1,10 @@
 using DotNetEnv;
 using SpotifyApi.DependencyInjection;
+using SpotifyApi.MappingProfiles;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddAutoMapper(typeof(PlaylistProfile));
 
 Env.Load();
 
