@@ -87,7 +87,7 @@ namespace SpotifyApi.Controllers
 
             return _addCollaboratorService.AddCollaborator(playlistId, addCollaboratorDto, int.Parse(userId))
                 .Match(
-                    Ok,
+                    _ => Ok(),
                     _playlistService.HandlePlaylistRequestError
                 );
         }

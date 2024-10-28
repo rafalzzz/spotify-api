@@ -15,5 +15,7 @@ namespace SpotifyApi.Utilities
         public static Error WrongUserId = new(ErrorType.WrongUserId, "Incorrect user Id");
         public static Error WrongPlaylistId = new(ErrorType.WrongUserId, "Incorrect playlist Id");
         public static Error Unauthorized = new(ErrorType.Unauthorized, "Unauthorized");
+        public static Error UserIsAlreadyAdded = new(ErrorType.UserIsAlreadyAdded, "User is already added to collaborators");
+        public static Error UserIsNotAdded = new(ErrorType.UserIsNotAdded, "User is not added to collaborators");
     }
 }

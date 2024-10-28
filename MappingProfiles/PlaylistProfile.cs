@@ -1,6 +1,7 @@
 using AutoMapper;
 using SpotifyApi.Entities;
 using SpotifyApi.Requests;
+using SpotifyApi.Responses;
 
 namespace SpotifyApi.MappingProfiles
 {
@@ -15,24 +16,16 @@ namespace SpotifyApi.MappingProfiles
                 .ForMember(dest => dest.FavoritedByUsers, opt => opt.Ignore())
                 .ForMember(dest => dest.OwnerId, opt => opt.Ignore());
 
-            // Map from EditPlaylist to Playlist
             CreateMap<EditPlaylist, Playlist>()
                 .ForMember(dest => dest.SongIds, opt => opt.Ignore())
                 .ForMember(dest => dest.Collaborators, opt => opt.Ignore())
                 .ForMember(dest => dest.FavoritedByUsers, opt => opt.Ignore())
-                .ForMember(dest => dest.OwnerId, opt => opt.Ignore())
+                .ForMember(dest => dest.OwnerId, opt => opt.Ignore());
 
-                // Optional
-                .ForAllMembers(opt => opt.Condition((src, dest, srcMember) => srcMember != null));
-
-            // Map from Playlist to PlaylistDto
-            /*  CreateMap<Playlist, PlaylistDto>()
-                 .ForMember(dest => dest.OwnerNickname, opt => opt.MapFrom(src => src.Owner.Nickname))
-                 .ForMember(dest => dest.CollaboratorNicknames, opt => opt.MapFrom(src => src.Collaborators.Select(c => c.Nickname).ToList()))
-                 .ForMember(dest => dest.FavoriteCount, opt => opt.MapFrom(src => src.FavoritedByUsers.Count)); */
-
-            CreateMap<AddCollaborator, Playlist>()
-                .ForMember(dest => dest.Collaborators, opt => opt.Ignore());
+            CreateMap<Playlist, PlaylistDto>()
+                .ForMember(dest => dest.IsOwner, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    src.OwnerId == (int)context.Items["UserId"]))
+                .ForMember(dest => dest.SongIds, opt => opt.MapFrom(src => src.SongIds));
         }
     }
 }

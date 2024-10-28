@@ -1,5 +1,8 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SpotifyApi.Entities;
+using SpotifyApi.Responses;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
@@ -10,18 +13,20 @@ namespace SpotifyApi.Services
         Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
         Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
         Result<int> DeletePlaylist(int playlistId, int userId);
-        Result<Playlist> AddCollaborator(int playlistId, int collaboratorId, int userId);
-        Result<Playlist> RemoveCollaborator(int playlistId, int collaboratorId, int userId);
+        Result<bool> AddCollaborator(int playlistId, int collaboratorId, int userId);
+        Result<bool> RemoveCollaborator(int playlistId, int collaboratorId, int userId);
         ActionResult HandlePlaylistRequestError(Error err);
     }
 
     public class PlaylistService(
         SpotifyDbContext dbContext,
+        IMapper mapper,
         IErrorHandlingService errorHandlingService,
         IUserService userService
     ) : IPlaylistService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
+        private readonly IMapper _mapper = mapper;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
         private readonly IUserService _userService = userService;
 
@@ -54,9 +59,9 @@ namespace SpotifyApi.Services
         {
             try
             {
-                var playlist = _dbContext.Playlists.FirstOrDefault(
-                        playlist => playlist.Id == id
-                    );
+                var playlist = _dbContext.Playlists
+                    .Include(playlist => playlist.Collaborators)
+                    .FirstOrDefault(playlist => playlist.Id == id);
 
                 if (playlist is null)
                 {
@@ -134,39 +139,38 @@ namespace SpotifyApi.Services
             return collaboratorResult.IsSuccess ?
                 Result<User>.Success(collaboratorResult.Value) :
                 Result<User>.Failure(Error.WrongUserId);
-
         }
 
         private static Result<User> IsCollaboratorNotAdded(Playlist playlist, User collaborator)
         {
-            return !playlist.Collaborators.Contains(collaborator) ?
-                Result<User>.Success(collaborator) :
-                Result<User>.Failure(Error.WrongUserId);
+            return playlist.Collaborators.Any(c => c.Id == collaborator.Id) ?
+                Result<User>.Failure(Error.UserIsAlreadyAdded) :
+                Result<User>.Success(collaborator);
         }
 
-        private Result<Playlist> AddCollaboratorToPlaylist(Playlist playlist, User collaborator)
+        private Result<bool> AddCollaboratorToPlaylist(Playlist playlist, User collaborator)
         {
             try
             {
                 playlist.Collaborators.Add(collaborator);
                 _dbContext.SaveChanges();
 
-                return Result<Playlist>.Success(playlist);
+                return Result<bool>.Success(true);
             }
             catch (Exception exception)
             {
                 var logErrorAction = "add collaborator";
-                return HandlePlaylistException<Playlist>(logErrorAction, exception);
+                return HandlePlaylistException<bool>(logErrorAction, exception);
             }
         }
 
-        public Result<Playlist> AddCollaborator(int playlistId, int collaboratorId, int userId)
+        public Result<bool> AddCollaborator(int playlistId, int collaboratorId, int userId)
         {
             var playlistResult = GetPlaylistById(playlistId);
 
             if (!playlistResult.IsSuccess)
             {
-                return Result<Playlist>.Failure(playlistResult.Error);
+                return Result<bool>.Failure(playlistResult.Error);
             }
 
             var playlist = playlistResult.Value;
@@ -179,34 +183,34 @@ namespace SpotifyApi.Services
 
         private static Result<User> IsCollaboratorAdded(Playlist playlist, User collaborator)
         {
-            return playlist.Collaborators.Contains(collaborator) ?
+            return playlist.Collaborators.Any(c => c.Id == collaborator.Id) ?
                 Result<User>.Success(collaborator) :
-                Result<User>.Failure(Error.WrongUserId);
+                Result<User>.Failure(Error.UserIsNotAdded);
         }
 
-        private Result<Playlist> RemoveCollaboratorFromPlaylist(Playlist playlist, User collaborator)
+        private Result<bool> RemoveCollaboratorFromPlaylist(Playlist playlist, User collaborator)
         {
             try
             {
                 playlist.Collaborators.Remove(collaborator);
                 _dbContext.SaveChanges();
 
-                return Result<Playlist>.Success(playlist);
+                return Result<bool>.Success(true);
             }
             catch (Exception exception)
             {
                 var logErrorAction = "remove collaborator";
-                return HandlePlaylistException<Playlist>(logErrorAction, exception);
+                return HandlePlaylistException<bool>(logErrorAction, exception);
             }
         }
 
-        public Result<Playlist> RemoveCollaborator(int playlistId, int collaboratorId, int userId)
+        public Result<bool> RemoveCollaborator(int playlistId, int collaboratorId, int userId)
         {
             var playlistResult = GetPlaylistById(playlistId);
 
             if (!playlistResult.IsSuccess)
             {
-                return Result<Playlist>.Failure(playlistResult.Error);
+                return Result<bool>.Failure(playlistResult.Error);
             }
 
             var playlist = playlistResult.Value;
@@ -234,6 +238,8 @@ namespace SpotifyApi.Services
                 ErrorType.Validation => new BadRequestObjectResult(err),
                 ErrorType.WrongPlaylistId => new NotFoundObjectResult(err.Description),
                 ErrorType.WrongUserId => new NotFoundObjectResult(err.Description),
+                ErrorType.UserIsAlreadyAdded => new BadRequestObjectResult(err.Description),
+                ErrorType.UserIsNotAdded => new BadRequestObjectResult(err.Description),
                 ErrorType.Unauthorized => new UnauthorizedObjectResult(err.Description),
                 _ => new ObjectResult("An unexpected error occurred: " + err.Description)
                 {

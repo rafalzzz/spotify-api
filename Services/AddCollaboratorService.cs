@@ -1,5 +1,5 @@
 using FluentValidation;
-using SpotifyApi.Entities;
+using SpotifyApi.Responses;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
@@ -7,7 +7,7 @@ namespace SpotifyApi.Services
 {
     public interface IAddCollaboratorService
     {
-        Result<Playlist> AddCollaborator(int playlistId, AddCollaborator addCollaboratorDto, int userId);
+        Result<bool> AddCollaborator(int playlistId, AddCollaborator addCollaboratorDto, int userId);
     }
 
     public class AddCollaboratorService(
@@ -31,7 +31,7 @@ namespace SpotifyApi.Services
                 Result<AddCollaborator>.Failure(validationResult.Error);
         }
 
-        public Result<Playlist> AddCollaborator(int playlistId, AddCollaborator addCollaboratorDto, int userId)
+        public Result<bool> AddCollaborator(int playlistId, AddCollaborator addCollaboratorDto, int userId)
         {
             return ValidateCollaboratorAddition(addCollaboratorDto)
             .Bind(addCollaborator => _playlistService.AddCollaborator(playlistId, addCollaborator.CollaboratorId, userId));
