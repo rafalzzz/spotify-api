@@ -12,7 +12,7 @@ namespace SpotifyApi.Services
     {
         Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
         Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
-        Result<int> DeletePlaylist(int playlistId, int userId);
+        Result<bool> DeletePlaylist(int playlistId, int userId);
         Result<bool> AddCollaborator(int playlistId, int collaboratorId, int userId);
         Result<bool> RemoveCollaborator(int playlistId, int collaboratorId, int userId);
         ActionResult HandlePlaylistRequestError(Error err);
@@ -45,6 +45,8 @@ namespace SpotifyApi.Services
 
                 _dbContext.Playlists.Add(newPlaylist);
                 _dbContext.SaveChanges();
+
+                // TODO - add mapping Playlist to PlaylistDto
 
                 return Result<Playlist>.Success(newPlaylist);
             }
@@ -93,6 +95,8 @@ namespace SpotifyApi.Services
 
                 _dbContext.SaveChanges();
 
+                // TODO - add mapping Playlist to PlaylistDto
+
                 return Result<Playlist>.Success(playlist);
             }
             catch (Exception exception)
@@ -109,23 +113,23 @@ namespace SpotifyApi.Services
             .Bind(playlist => UpdatePlaylistChanges(playlist, editPlaylistDto));
         }
 
-        private Result<int> DeletePlaylistFromDb(Playlist playlist)
+        private Result<bool> DeletePlaylistFromDb(Playlist playlist)
         {
             try
             {
                 _dbContext.Playlists.Remove(playlist);
                 _dbContext.SaveChanges();
 
-                return Result<int>.Success(playlist.Id);
+                return Result<bool>.Success(true);
             }
             catch (Exception exception)
             {
                 var logErrorAction = "delete playlist";
-                return HandlePlaylistException<int>(logErrorAction, exception);
+                return HandlePlaylistException<bool>(logErrorAction, exception);
             }
         }
 
-        public Result<int> DeletePlaylist(int playlistId, int userId)
+        public Result<bool> DeletePlaylist(int playlistId, int userId)
         {
             return GetPlaylistById(playlistId)
             .Bind(playlist => VerifyPlaylistOwner(playlist, userId))
