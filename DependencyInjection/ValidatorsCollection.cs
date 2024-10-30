@@ -16,7 +16,6 @@ namespace SpotifyApi.DependencyInjection
             services.AddTransient<IValidator<SearchTracksParams>, SearchTracksParamsValidator>();
             services.AddTransient<IValidator<CreatePlaylist>, CreatePlaylistValidator>();
             services.AddTransient<IValidator<EditPlaylist>, EditPlaylistValidator>();
-            services.AddTransient<IValidator<AddCollaborator>, AddCollaboratorValidator>();
 
             return services;
         }

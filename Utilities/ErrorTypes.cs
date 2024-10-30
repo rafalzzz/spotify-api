@@ -37,7 +37,12 @@ namespace SpotifyApi.Utilities
         [Description("UserNotFound")]
         WrongPlaylistId = 15,
         [Description("Unathorized")]
-        Unauthorized = 16
+        Unauthorized = 16,
+        [Description("UserIsAlreadyAdded")]
+        UserIsAlreadyAdded = 17,
+        [Description("UserIsNotAdded")]
+        UserIsNotAdded = 18
+
 
     }
 }

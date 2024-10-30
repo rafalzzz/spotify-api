@@ -1,14 +1,13 @@
 using FluentValidation;
-using SpotifyApi.Entities;
 using SpotifyApi.Requests;
+using SpotifyApi.Responses;
 using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {
     public interface IPlaylistEditionService
     {
-        Result<EditPlaylist> ValidatePlaylistEdition(EditPlaylist editPlaylistDto);
-        Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
+        Result<PlaylistDto> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
     }
 
     public class PlaylistEditionService(
@@ -21,7 +20,7 @@ namespace SpotifyApi.Services
         private readonly IValidator<EditPlaylist> _editPlaylistValidator = editPlaylistValidator;
         private readonly IPlaylistService _playlistService = playlistService;
 
-        public Result<EditPlaylist> ValidatePlaylistEdition(EditPlaylist editPlaylistDto)
+        private Result<EditPlaylist> ValidatePlaylistEdition(EditPlaylist editPlaylistDto)
         {
             var validationResult = _requestValidatorService.ValidateRequest(
                 editPlaylistDto,
@@ -32,7 +31,7 @@ namespace SpotifyApi.Services
                 Result<EditPlaylist>.Failure(validationResult.Error);
         }
 
-        public Result<Playlist> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId)
+        public Result<PlaylistDto> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId)
         {
             return ValidatePlaylistEdition(editPlaylistDto)
             .Bind(editPlaylist => _playlistService.EditPlaylist(playlistId, editPlaylist, userId));

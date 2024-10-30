@@ -1,9 +1,9 @@
 using Microsoft.IdentityModel.Tokens;
-using SpotifyApi.Utilities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security;
 using System.Security.Claims;
 using System.Text;
+using SpotifyApi.Utilities;
 
 namespace SpotifyApi.Services
 {
