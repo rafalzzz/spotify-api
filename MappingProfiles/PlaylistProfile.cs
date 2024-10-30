@@ -1,7 +1,7 @@
 using AutoMapper;
 using SpotifyApi.Entities;
-using SpotifyApi.Requests;
 using SpotifyApi.Responses;
+using SpotifyApi.Requests;
 
 namespace SpotifyApi.MappingProfiles
 {
