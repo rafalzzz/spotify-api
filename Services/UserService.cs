@@ -10,7 +10,7 @@ namespace SpotifyApi.Services
         Result<User> CreateUser(RegisterUser registerUserDto);
         Result<User> VerifyUser(LoginUser loginUserDto);
         public Result<User> GetUserByEmail(string email);
-        public Result<User> GetUserById(string id);
+        public Result<User> GetUserById(int id);
         Result<User> GetUserByLogin(string login);
         Result<bool> SavePasswordResetToken(string token, User user);
         Result<bool> ChangeUserPassword(User user, string token, string password);
@@ -37,7 +37,7 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "check if user exists";
-                return HandleUserException<bool>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<bool>(logErrorAction, exception);
             }
         }
 
@@ -69,7 +69,7 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "create user";
-                return HandleUserException<User>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<User>(logErrorAction, exception);
             }
         }
 
@@ -89,19 +89,19 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "get user by email";
-                return HandleUserException<User>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<User>(logErrorAction, exception);
             }
         }
 
-        public Result<User> GetUserById(string id)
+        public Result<User> GetUserById(int id)
         {
             try
             {
-                User? user = _dbContext.Users.FirstOrDefault(user => user.Id == int.Parse(id));
+                User? user = _dbContext.Users.FirstOrDefault(user => user.Id == id);
 
                 if (user is null)
                 {
-                    return Result<User>.Failure(Error.WrongId);
+                    return Result<User>.Failure(Error.WrongUserId);
                 }
 
                 return Result<User>.Success(user);
@@ -109,7 +109,7 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "get user by id";
-                return HandleUserException<User>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<User>(logErrorAction, exception);
             }
         }
 
@@ -129,7 +129,7 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "get user by nickname";
-                return HandleUserException<User>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<User>(logErrorAction, exception);
             }
         }
 
@@ -144,7 +144,7 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "verify user password";
-                return HandleUserException<bool>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<bool>(logErrorAction, exception);
             }
         }
 
@@ -192,7 +192,7 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "save password reset token";
-                return HandleUserException<bool>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<bool>(logErrorAction, exception);
             }
         }
 
@@ -218,7 +218,7 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "change user password";
-                return HandleUserException<bool>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<bool>(logErrorAction, exception);
             }
         }
 
@@ -234,18 +234,8 @@ namespace SpotifyApi.Services
             catch (Exception exception)
             {
                 var logErrorAction = "save user refresh token";
-                return HandleUserException<bool>(logErrorAction, exception);
+                return _errorHandlingService.HandleDatabaseException<bool>(logErrorAction, exception);
             }
-        }
-
-        private Result<ResultType> HandleUserException<ResultType>(string logErrorAction, Exception exception)
-        {
-            var error = _errorHandlingService.HandleDatabaseError(
-                exception,
-                logErrorAction
-            );
-
-            return Result<ResultType>.Failure(error);
         }
     }
 }

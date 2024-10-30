@@ -79,7 +79,13 @@ namespace SpotifyApi.Services
 
             var expires = DateTime.Now.AddMinutes(_passwordResetSettings.TokenLifeTime);
 
-            return _jwtService.GenerateToken(claims, _passwordResetSettings.Issuer, _passwordResetSettings.Audience, passwordResetSecretKey, expires);
+            return _jwtService.GenerateToken(
+                claims,
+                _passwordResetSettings.Issuer,
+                _passwordResetSettings.Audience,
+                passwordResetSecretKey,
+                expires
+            );
         }
 
         private async Task<Result<bool>> SendPasswordResetToken(string email, string token)

@@ -1,5 +1,5 @@
 using FluentValidation;
-using SpotifyApi.Entities;
+using SpotifyApi.Responses;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
 
@@ -7,8 +7,7 @@ namespace SpotifyApi.Services
 {
     public interface IPlaylistCreationService
     {
-        Result<CreatePlaylist> ValidatePlaylistCreation(CreatePlaylist createPlaylistDto);
-        Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
+        Result<PlaylistDto> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
     }
 
     public class PlaylistCreationService(
@@ -32,13 +31,10 @@ namespace SpotifyApi.Services
                 Result<CreatePlaylist>.Failure(validationResult.Error);
         }
 
-        public Result<Playlist> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
+        public Result<PlaylistDto> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
         {
-            var createPlaylistResult = _playlistService.CreatePlaylist(createPlaylistDto, userId);
-
-            return createPlaylistResult.IsSuccess ?
-                Result<Playlist>.Success(createPlaylistResult.Value) :
-                Result<Playlist>.Failure(createPlaylistResult.Error);
+            return ValidatePlaylistCreation(createPlaylistDto)
+            .Bind(createPlaylist => _playlistService.CreatePlaylist(createPlaylist, userId));
         }
     }
 }

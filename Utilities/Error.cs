@@ -12,8 +12,10 @@ namespace SpotifyApi.Utilities
         public static Error InvalidToken = new(ErrorType.InvalidToken, "Invalid token");
         public static Error ApiItunesError = new(ErrorType.ApiItunes, "Error calling iTunes API");
         public static Error ConfigurationError = new(ErrorType.ConfigurationError, "Missing secretKey");
-        public static Error WrongId = new(ErrorType.WrongId, "Incorrect user Id");
-        public static Error NotFound = new(ErrorType.NotFound, "Item not found");
+        public static Error WrongUserId = new(ErrorType.WrongUserId, "Incorrect user Id");
+        public static Error WrongPlaylistId = new(ErrorType.WrongUserId, "Incorrect playlist Id");
         public static Error Unauthorized = new(ErrorType.Unauthorized, "Unauthorized");
+        public static Error UserIsAlreadyAdded = new(ErrorType.UserIsAlreadyAdded, "User is already added to collaborators");
+        public static Error UserIsNotAdded = new(ErrorType.UserIsNotAdded, "User is not added to collaborators");
     }
 }

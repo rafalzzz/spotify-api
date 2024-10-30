@@ -31,8 +31,7 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _playlistCreationService.ValidatePlaylistCreation(createPlaylistDto)
-                .Bind(_ => _playlistCreationService.CreatePlaylist(createPlaylistDto, int.Parse(userId)))
+            return _playlistCreationService.CreatePlaylist(createPlaylistDto, int.Parse(userId))
                 .Match(
                     playlist => Created(string.Empty, playlist),
                     _playlistService.HandlePlaylistRequestError
@@ -49,8 +48,7 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _playlistEditionService.ValidatePlaylistEdition(editPlaylistDto)
-                .Bind(_ => _playlistEditionService.EditPlaylist(playlistId, editPlaylistDto, int.Parse(userId)))
+            return _playlistEditionService.EditPlaylist(playlistId, editPlaylistDto, int.Parse(userId))
                 .Match(
                     Ok,
                     _playlistService.HandlePlaylistRequestError
