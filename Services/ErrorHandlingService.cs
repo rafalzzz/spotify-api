@@ -12,8 +12,9 @@ namespace SpotifyApi.Services
             string logErrorAction,
             string? initialErrorMessage = ""
         );
-        Error HandleDatabaseError(Exception exception, string logErrorAction);
         Error HandleConfigurationError();
+        Error HandleDatabaseError(Exception exception, string logErrorAction);
+        Result<ResultType> HandleDatabaseException<ResultType>(string logErrorAction, Exception exception);
     }
 
     public class ErrorHandlingService(NLog.ILogger logger) : IErrorHandlingService
@@ -39,17 +40,27 @@ namespace SpotifyApi.Services
             return error;
         }
 
-        public Error HandleDatabaseError(Exception exception, string logErrorAction)
-        {
-            return HandleError(exception, ErrorType.Database, logErrorAction);
-        }
-
         public Error HandleConfigurationError()
         {
             var initialErrorMessage = "Unexpected configuration error";
             DisplayLogError(ErrorType.ConfigurationError, initialErrorMessage, "Missing secretKey");
 
             return Error.ConfigurationError;
+        }
+
+        public Error HandleDatabaseError(Exception exception, string logErrorAction)
+        {
+            return HandleError(exception, ErrorType.Database, logErrorAction);
+        }
+
+        public Result<ResultType> HandleDatabaseException<ResultType>(string logErrorAction, Exception exception)
+        {
+            var error = HandleDatabaseError(
+                exception,
+                logErrorAction
+            );
+
+            return Result<ResultType>.Failure(error);
         }
     }
 }

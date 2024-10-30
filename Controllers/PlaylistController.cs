@@ -14,13 +14,11 @@ namespace SpotifyApi.Controllers
     public class PlaylistController(
         IPlaylistCreationService playlistCreationService,
         IPlaylistEditionService playlistEditionService,
-        IAddCollaboratorService addCollaboratorService,
         IPlaylistService playlistService
     ) : ControllerBase
     {
         private readonly IPlaylistCreationService _playlistCreationService = playlistCreationService;
         private readonly IPlaylistEditionService _playlistEditionService = playlistEditionService;
-        private readonly IAddCollaboratorService _addCollaboratorService = addCollaboratorService;
         private readonly IPlaylistService _playlistService = playlistService;
 
         [HttpPost()]
@@ -73,40 +71,6 @@ namespace SpotifyApi.Controllers
                     _playlistService.HandlePlaylistRequestError
                 );
 
-        }
-
-        [HttpPost("{playlistId}/collaborators")]
-        public IActionResult AddCollaborator([FromRoute] int playlistId, AddCollaborator addCollaboratorDto)
-        {
-            var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized();
-            }
-
-            return _addCollaboratorService.AddCollaborator(playlistId, addCollaboratorDto, int.Parse(userId))
-                .Match(
-                    _ => Ok(),
-                    _playlistService.HandlePlaylistRequestError
-                );
-        }
-
-        [HttpDelete("{playlistId}/collaborators/{collaboratorId}")]
-        public IActionResult RemoveCollaborator([FromRoute] int playlistId, [FromRoute] int collaboratorId)
-        {
-            var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized();
-            }
-
-            return _playlistService.RemoveCollaborator(playlistId, collaboratorId, int.Parse(userId))
-                .Match(
-                    _ => NoContent(),
-                    _playlistService.HandlePlaylistRequestError
-                );
         }
     }
 }

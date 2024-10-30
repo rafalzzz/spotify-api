@@ -9,14 +9,7 @@ namespace SpotifyApi.MappingProfiles
     {
         public PlaylistProfile()
         {
-            // Map from CreatePlaylis to Playlist
             CreateMap<CreatePlaylist, Playlist>()
-                .ForMember(dest => dest.SongIds, opt => opt.Ignore())
-                .ForMember(dest => dest.Collaborators, opt => opt.Ignore())
-                .ForMember(dest => dest.FavoritedByUsers, opt => opt.Ignore())
-                .ForMember(dest => dest.OwnerId, opt => opt.Ignore());
-
-            CreateMap<EditPlaylist, Playlist>()
                 .ForMember(dest => dest.SongIds, opt => opt.Ignore())
                 .ForMember(dest => dest.Collaborators, opt => opt.Ignore())
                 .ForMember(dest => dest.FavoritedByUsers, opt => opt.Ignore())
