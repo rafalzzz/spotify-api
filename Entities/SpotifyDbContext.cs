@@ -79,7 +79,9 @@ namespace SpotifyApi.Entities
                     throw new InvalidOperationException("Connection string is not provided.");
                 }
 
-                optionsBuilder.UseNpgsql(connectionString);
+                optionsBuilder
+                .UseNpgsql(connectionString)
+                .UseLazyLoadingProxies();
             }
             catch (Exception exception)
             {
