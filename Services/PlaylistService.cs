@@ -10,6 +10,7 @@ namespace SpotifyApi.Services
 {
     public interface IPlaylistService
     {
+        PlaylistDto MapPlaylistEntityToDto(Playlist playlist, int userId);
         Result<PlaylistDto> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
         Result<Playlist> GetPlaylistById(int id);
         Result<PlaylistDto> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
@@ -28,7 +29,7 @@ namespace SpotifyApi.Services
         private readonly IMapper _mapper = mapper;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
-        private PlaylistDto MapPlaylistEntityToDto(Playlist playlist, int userId)
+        public PlaylistDto MapPlaylistEntityToDto(Playlist playlist, int userId)
         {
             return _mapper.Map<PlaylistDto>(playlist, opts => opts.Items["UserId"] = userId);
         }
@@ -137,9 +138,6 @@ namespace SpotifyApi.Services
             {
                 ErrorType.Validation => new BadRequestObjectResult(err),
                 ErrorType.WrongPlaylistId => new NotFoundObjectResult(err.Description),
-                ErrorType.WrongUserId => new NotFoundObjectResult(err.Description),
-                ErrorType.UserIsAlreadyAdded => new BadRequestObjectResult(err.Description),
-                ErrorType.UserIsNotAdded => new BadRequestObjectResult(err.Description),
                 ErrorType.Unauthorized => new UnauthorizedObjectResult(err.Description),
                 _ => new ObjectResult("An unexpected error occurred: " + err.Description)
                 {

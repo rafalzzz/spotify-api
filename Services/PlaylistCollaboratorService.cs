@@ -1,11 +1,14 @@
+using Microsoft.AspNetCore.Mvc;
 using SpotifyApi.Entities;
 using SpotifyApi.Utilities;
+
 namespace SpotifyApi.Services
 {
     public interface IPlaylistCollaboratorService
     {
         Result<bool> AddCollaborator(int playlistId, int collaboratorId, int userId);
         Result<bool> RemoveCollaborator(int playlistId, int collaboratorId, int userId);
+        ActionResult HandleCollaboratorRequestError(Error err);
     }
 
     public class PlaylistCollaboratorService(
@@ -29,9 +32,14 @@ namespace SpotifyApi.Services
                 Result<User>.Failure(Error.WrongUserId);
         }
 
+        private static bool IsCollaboratorAddedToArray(Playlist playlist, User collaborator)
+        {
+            return playlist.Collaborators.Any(c => c.Id == collaborator.Id);
+        }
+
         private static Result<User> IsCollaboratorNotAdded(Playlist playlist, User collaborator)
         {
-            return playlist.Collaborators.Any(c => c.Id == collaborator.Id) ?
+            return IsCollaboratorAddedToArray(playlist, collaborator) ?
                 Result<User>.Failure(Error.UserIsAlreadyAdded) :
                 Result<User>.Success(collaborator);
         }
@@ -71,7 +79,7 @@ namespace SpotifyApi.Services
 
         private static Result<User> IsCollaboratorAdded(Playlist playlist, User collaborator)
         {
-            return playlist.Collaborators.Any(c => c.Id == collaborator.Id) ?
+            return IsCollaboratorAddedToArray(playlist, collaborator) ?
                 Result<User>.Success(collaborator) :
                 Result<User>.Failure(Error.UserIsNotAdded);
         }
@@ -107,6 +115,22 @@ namespace SpotifyApi.Services
                 .Bind(_ => GetCollaboratorById(collaboratorId))
                 .Bind(collaborator => IsCollaboratorAdded(playlist, collaborator))
                 .Bind(collaborator => RemoveCollaboratorFromPlaylist(playlist, collaborator));
+        }
+
+        public ActionResult HandleCollaboratorRequestError(Error err)
+        {
+            return err.Type switch
+            {
+                ErrorType.WrongPlaylistId => new NotFoundObjectResult(err.Description),
+                ErrorType.WrongUserId => new NotFoundObjectResult(err.Description),
+                ErrorType.UserIsAlreadyAdded => new BadRequestObjectResult(err.Description),
+                ErrorType.UserIsNotAdded => new BadRequestObjectResult(err.Description),
+                ErrorType.Unauthorized => new UnauthorizedObjectResult(err.Description),
+                _ => new ObjectResult("An unexpected error occurred: " + err.Description)
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                }
+            };
         }
     }
 }

@@ -24,6 +24,7 @@ namespace SpotifyApi.DependencyInjection
             services.AddScoped<IPlaylistCreationService, PlaylistCreationService>();
             services.AddScoped<IPlaylistEditionService, PlaylistEditionService>();
             services.AddScoped<IPlaylistCollaboratorService, PlaylistCollaboratorService>();
+            services.AddScoped<IPlaylistSongsService, PlaylistSongsService>();
 
             services.AddTransient<IEmailService, EmailService>();
 
