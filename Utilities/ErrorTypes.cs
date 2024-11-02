@@ -41,8 +41,10 @@ namespace SpotifyApi.Utilities
         [Description("UserIsAlreadyAdded")]
         UserIsAlreadyAdded = 17,
         [Description("UserIsNotAdded")]
-        UserIsNotAdded = 18
-
-
+        UserIsNotAdded = 18,
+        [Description("SongIsAlreadyAdded")]
+        SongIsAlreadyAdded = 19,
+        [Description("SongIsNotAdded")]
+        SongIsNotAdded = 20
     }
 }

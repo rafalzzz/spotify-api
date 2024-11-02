@@ -66,7 +66,7 @@ namespace SpotifyApi.Controllers
                 );
         }
 
-        [HttpPut("password-reset-complete/{token}")]
+        [HttpPatch("password-reset-complete/{token}")]
         public ActionResult PasswordResetComplete([FromBody] PasswordResetComplete passwordResetCompleteDto, [FromRoute] string token)
         {
             return _passwordResetCompleteService.ValidatePasswordResetCompleteRequest(passwordResetCompleteDto)

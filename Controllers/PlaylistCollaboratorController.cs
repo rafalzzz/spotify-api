@@ -11,14 +11,12 @@ namespace SpotifyApi.Controllers
     [Route(ControllerRoutes.Playlist)]
     [Authorize]
     public class PlaylistCollaboratorController(
-        IPlaylistService playlistService,
         IPlaylistCollaboratorService playlistCollaboratorService
     ) : ControllerBase
     {
-        private readonly IPlaylistService _playlistService = playlistService;
         private readonly IPlaylistCollaboratorService _playlistCollaboratorService = playlistCollaboratorService;
 
-        [HttpPut("{playlistId}/collaborators/{collaboratorId}")]
+        [HttpPatch("{playlistId}/collaborators/{collaboratorId}")]
         public IActionResult AddCollaborator([FromRoute] int playlistId, [FromRoute] int collaboratorId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
@@ -31,7 +29,7 @@ namespace SpotifyApi.Controllers
             return _playlistCollaboratorService.AddCollaborator(playlistId, collaboratorId, int.Parse(userId))
                 .Match(
                     _ => Ok(),
-                    _playlistService.HandlePlaylistRequestError
+                    _playlistCollaboratorService.HandleCollaboratorRequestError
                 );
         }
 
@@ -48,7 +46,7 @@ namespace SpotifyApi.Controllers
             return _playlistCollaboratorService.RemoveCollaborator(playlistId, collaboratorId, int.Parse(userId))
                 .Match(
                     _ => NoContent(),
-                    _playlistService.HandlePlaylistRequestError
+                    _playlistCollaboratorService.HandleCollaboratorRequestError
                 );
         }
     }
