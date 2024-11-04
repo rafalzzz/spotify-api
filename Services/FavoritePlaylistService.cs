@@ -69,7 +69,7 @@ namespace SpotifyApi.Services
             var isCollaborator = playlist.Collaborators.Any(c => c.Id == user.Id);
 
             return isOwner || isCollaborator ? Result<User>.Success(user) :
-                Result<User>.Failure(Error.WrongUserId);
+                Result<User>.Failure(Error.UserIsOwnerOrCollaborator);
         }
 
         private static bool IsPlaylistAddedToFavorites(User user, Playlist playlist)
