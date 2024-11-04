@@ -51,6 +51,8 @@ namespace SpotifyApi.Utilities
         [Description("PlaylistIsAlreadyAddedToFavorites")]
         PlaylistIsAlreadyAddedToFavorites = 22,
         [Description("PlaylistIsNotAddedToFavorites")]
-        PlaylistIsNotAddedToFavorites = 23
+        PlaylistIsNotAddedToFavorites = 23,
+        [Description("UserIsOwnerOrCollaborator")]
+        UserIsOwnerOrCollaborator = 24
     }
 }

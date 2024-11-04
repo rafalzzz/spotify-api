@@ -14,23 +14,21 @@ namespace SpotifyApi.Services
 
     public class FavoritePlaylistService(
         SpotifyDbContext dbContext,
+        IPlaylistService playlistService,
         IErrorHandlingService errorHandlingService
     ) : IFavoritePlaylistService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
+        private readonly IPlaylistService _playlistService = playlistService;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         private Result<Playlist> GetFavoritePlaylistById(int id)
         {
-            try
-            {
-                var playlist = _dbContext.Playlists
-                    .FirstOrDefault(playlist => playlist.Id == id);
+            var playlistResult = _playlistService.GetPlaylistById(id);
 
-                if (playlist is null)
-                {
-                    return Result<Playlist>.Failure(Error.WrongPlaylistId);
-                }
+            if (playlistResult.IsSuccess)
+            {
+                var playlist = playlistResult.Value;
 
                 if (!playlist.IsPublic)
                 {
@@ -39,11 +37,8 @@ namespace SpotifyApi.Services
 
                 return Result<Playlist>.Success(playlist);
             }
-            catch (Exception exception)
-            {
-                var logErrorAction = "get favorite playlist by id";
-                return _errorHandlingService.HandleDatabaseException<Playlist>(logErrorAction, exception);
-            }
+
+            return Result<Playlist>.Failure(playlistResult.Error);
         }
 
         public Result<User> GetUserById(int id)
@@ -66,6 +61,15 @@ namespace SpotifyApi.Services
                 var logErrorAction = "get user with favorite playlists by id";
                 return _errorHandlingService.HandleDatabaseException<User>(logErrorAction, exception);
             }
+        }
+
+        private static Result<User> CheckIfUserIsOwnerOrCollaborator(User user, Playlist playlist)
+        {
+            var isOwner = playlist.OwnerId == user.Id;
+            var isCollaborator = playlist.Collaborators.Any(c => c.Id == user.Id);
+
+            return isOwner || isCollaborator ? Result<User>.Success(user) :
+                Result<User>.Failure(Error.WrongUserId);
         }
 
         private static bool IsPlaylistAddedToFavorites(User user, Playlist playlist)
@@ -106,6 +110,7 @@ namespace SpotifyApi.Services
             var playlist = playlistResult.Value;
 
             return GetUserById(userId)
+                .Bind(user => CheckIfUserIsOwnerOrCollaborator(user, playlist))
                 .Bind(user => AddToFavorites(user, playlist));
         }
 

@@ -22,5 +22,6 @@ namespace SpotifyApi.Utilities
         public static readonly Error PlaylistIsNotPublic = new(ErrorType.PlaylistIsNotPublic, "Playlist is not public");
         public static readonly Error PlaylistIsAlreadyAddedToFavorites = new(ErrorType.PlaylistIsAlreadyAddedToFavorites, "Playlist is already added to favorites");
         public static readonly Error PlaylistIsNotAddedToFavorites = new(ErrorType.PlaylistIsNotAddedToFavorites, "Playlist is not added to favorites");
+        public static readonly Error UserIsOwnerOrCollaborator = new(ErrorType.UserIsOwnerOrCollaborator, "Playlist cannot be added to favorites - user is owner or collaborator of the playlist");
     }
 }
