@@ -45,6 +45,12 @@ namespace SpotifyApi.Utilities
         [Description("SongIsAlreadyAdded")]
         SongIsAlreadyAdded = 19,
         [Description("SongIsNotAdded")]
-        SongIsNotAdded = 20
+        SongIsNotAdded = 20,
+        [Description("PlaylistIsNotPublic")]
+        PlaylistIsNotPublic = 21,
+        [Description("PlaylistIsAlreadyAddedToFavorites")]
+        PlaylistIsAlreadyAddedToFavorites = 22,
+        [Description("PlaylistIsNotAddedToFavorites")]
+        PlaylistIsNotAddedToFavorites = 23
     }
 }

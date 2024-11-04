@@ -19,5 +19,8 @@ namespace SpotifyApi.Utilities
         public static readonly Error UserIsNotAdded = new(ErrorType.UserIsNotAdded, "User is not added to collaborators");
         public static readonly Error SongIsAlreadyAdded = new(ErrorType.SongIsAlreadyAdded, "Song is already added to playlist");
         public static readonly Error SongIsNotAdded = new(ErrorType.SongIsNotAdded, "Song is not added to playlist");
+        public static readonly Error PlaylistIsNotPublic = new(ErrorType.PlaylistIsNotPublic, "Playlist is not public");
+        public static readonly Error PlaylistIsAlreadyAddedToFavorites = new(ErrorType.PlaylistIsAlreadyAddedToFavorites, "Playlist is already added to favorites");
+        public static readonly Error PlaylistIsNotAddedToFavorites = new(ErrorType.PlaylistIsNotAddedToFavorites, "Playlist is not added to favorites");
     }
 }

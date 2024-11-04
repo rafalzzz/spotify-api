@@ -60,7 +60,7 @@ namespace SpotifyApi.Services
             }
             catch (Exception exception)
             {
-                var logErrorAction = "add song";
+                var logErrorAction = "add song to playlist";
                 return _errorHandlingService.HandleDatabaseException<PlaylistDto>(logErrorAction, exception);
             }
         }
@@ -101,7 +101,7 @@ namespace SpotifyApi.Services
             }
             catch (Exception exception)
             {
-                var logErrorAction = "remove song";
+                var logErrorAction = "remove song from playlist";
                 return _errorHandlingService.HandleDatabaseException<PlaylistDto>(logErrorAction, exception);
             }
         }
