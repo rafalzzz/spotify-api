@@ -157,6 +157,7 @@ namespace SpotifyApi.Services
                 ErrorType.WrongPlaylistId => new NotFoundObjectResult(err.Description),
                 ErrorType.PlaylistIsNotPublic => new BadRequestObjectResult(err.Description),
                 ErrorType.WrongUserId => new NotFoundObjectResult(err.Description),
+                ErrorType.UserIsOwnerOrCollaborator => new BadRequestObjectResult(err.Description),
                 ErrorType.PlaylistIsAlreadyAddedToFavorites => new BadRequestObjectResult(err.Description),
                 ErrorType.PlaylistIsNotAddedToFavorites => new BadRequestObjectResult(err.Description),
                 _ => new ObjectResult("An unexpected error occurred: " + err.Description)
