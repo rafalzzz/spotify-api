@@ -11,10 +11,10 @@ namespace SpotifyApi.Services
     public interface IPlaylistService
     {
         PlaylistDto MapPlaylistEntityToDto(Playlist playlist, int userId);
-        Result<PlaylistDto> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
+        Task<Result<PlaylistDto>> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
         Result<Playlist> GetPlaylistById(int id);
-        Result<PlaylistDto> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
-        Result<bool> DeletePlaylist(int playlistId, int userId);
+        Task<Result<PlaylistDto>> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
+        Task<Result<bool>> DeletePlaylist(int playlistId, int userId);
         Result<Playlist> VerifyPlaylistOwner(Playlist playlist, int userId);
         ActionResult HandlePlaylistRequestError(Error err);
     }
@@ -34,15 +34,15 @@ namespace SpotifyApi.Services
             return _mapper.Map<PlaylistDto>(playlist, opts => opts.Items["UserId"] = userId);
         }
 
-        public Result<PlaylistDto> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
+        public async Task<Result<PlaylistDto>> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
         {
             try
             {
                 var newPlaylist = _mapper.Map<Playlist>(createPlaylistDto);
                 newPlaylist.OwnerId = userId;
 
-                _dbContext.Playlists.Add(newPlaylist);
-                _dbContext.SaveChanges();
+                await _dbContext.Playlists.AddAsync(newPlaylist);
+                await _dbContext.SaveChangesAsync();
 
                 var playlistDto = MapPlaylistEntityToDto(newPlaylist, userId);
                 return Result<PlaylistDto>.Success(playlistDto);
@@ -82,7 +82,7 @@ namespace SpotifyApi.Services
                 Result<Playlist>.Failure(Error.Unauthorized);
         }
 
-        private Result<PlaylistDto> UpdatePlaylistChanges(Playlist playlist, EditPlaylist editPlaylistDto, int userId)
+        private async Task<Result<PlaylistDto>> UpdatePlaylistChanges(Playlist playlist, EditPlaylist editPlaylistDto, int userId)
         {
             try
             {
@@ -90,7 +90,7 @@ namespace SpotifyApi.Services
                 playlist.Description = editPlaylistDto.Description ?? playlist.Description;
                 playlist.IsPublic = editPlaylistDto.IsPublic ?? playlist.IsPublic;
 
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 var playlistDto = MapPlaylistEntityToDto(playlist, userId);
                 return Result<PlaylistDto>.Success(playlistDto);
@@ -102,19 +102,19 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<PlaylistDto> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId)
+        public async Task<Result<PlaylistDto>> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId)
         {
-            return GetPlaylistById(playlistId)
+            return await GetPlaylistById(playlistId)
             .Bind(playlist => VerifyPlaylistOwner(playlist, userId))
-            .Bind(playlist => UpdatePlaylistChanges(playlist, editPlaylistDto, userId));
+            .BindAsync(playlist => UpdatePlaylistChanges(playlist, editPlaylistDto, userId));
         }
 
-        private Result<bool> DeletePlaylistFromDb(Playlist playlist)
+        private async Task<Result<bool>> DeletePlaylistFromDb(Playlist playlist)
         {
             try
             {
                 _dbContext.Playlists.Remove(playlist);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 return Result<bool>.Success(true);
             }
@@ -125,11 +125,11 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<bool> DeletePlaylist(int playlistId, int userId)
+        public async Task<Result<bool>> DeletePlaylist(int playlistId, int userId)
         {
-            return GetPlaylistById(playlistId)
+            return await GetPlaylistById(playlistId)
             .Bind(playlist => VerifyPlaylistOwner(playlist, userId))
-            .Bind(DeletePlaylistFromDb);
+            .BindAsync(DeletePlaylistFromDb);
         }
 
         public ActionResult HandlePlaylistRequestError(Error err)

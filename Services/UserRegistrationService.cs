@@ -10,7 +10,7 @@ namespace SpotifyApi.Services
     {
         Result<RegisterUser> ValidateRegistration(RegisterUser registerUserDto);
         Task<Result<RegisterUser>> CheckIfUserExists(RegisterUser registerUserDto);
-        Result<User> CreateUser(RegisterUser registerUserDto);
+        Task<Result<User>> CreateUser(RegisterUser registerUserDto);
         ActionResult HandleRegistrationError(Error err);
     }
 
@@ -55,9 +55,9 @@ namespace SpotifyApi.Services
             return Result<RegisterUser>.Failure(userExistsResult.Error);
         }
 
-        public Result<User> CreateUser(RegisterUser registerUserDto)
+        public async Task<Result<User>> CreateUser(RegisterUser registerUserDto)
         {
-            var createUserResult = _userService.CreateUser(registerUserDto);
+            var createUserResult = await _userService.CreateUser(registerUserDto);
 
             return createUserResult.IsSuccess ?
                 Result<User>.Success(createUserResult.Value) :

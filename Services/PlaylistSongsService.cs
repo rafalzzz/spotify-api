@@ -7,8 +7,8 @@ namespace SpotifyApi.Services
 {
     public interface IPlaylistSongsService
     {
-        Result<PlaylistDto> AddSong(int playlistId, int songId, int userId);
-        Result<PlaylistDto> RemoveSong(int playlistId, int songId, int userId);
+        Task<Result<PlaylistDto>> AddSong(int playlistId, int songId, int userId);
+        Task<Result<PlaylistDto>> RemoveSong(int playlistId, int songId, int userId);
         ActionResult HandlePlaylistSongsRequestError(Error err);
     }
 
@@ -47,12 +47,12 @@ namespace SpotifyApi.Services
                 Result<Playlist>.Success(playlist);
         }
 
-        private Result<PlaylistDto> AddSongToPlaylist(Playlist playlist, int songId, int userId)
+        private async Task<Result<PlaylistDto>> AddSongToPlaylist(Playlist playlist, int songId, int userId)
         {
             try
             {
                 playlist.SongIds.Add(songId);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 var playlistDto = _playlistService.MapPlaylistEntityToDto(playlist, userId);
 
@@ -65,7 +65,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<PlaylistDto> AddSong(int playlistId, int songId, int userId)
+        public async Task<Result<PlaylistDto>> AddSong(int playlistId, int songId, int userId)
         {
             var playlistResult = _playlistService.GetPlaylistById(playlistId);
 
@@ -76,9 +76,9 @@ namespace SpotifyApi.Services
 
             var playlist = playlistResult.Value;
 
-            return VerifyUser(playlist, userId)
+            return await VerifyUser(playlist, userId)
                 .Bind(_ => IsSongNotAdded(playlist, songId))
-                .Bind(_ => AddSongToPlaylist(playlist, songId, userId));
+                .BindAsync(_ => AddSongToPlaylist(playlist, songId, userId));
         }
 
         private static Result<Playlist> IsSongAdded(Playlist playlist, int newSongId)
@@ -88,12 +88,12 @@ namespace SpotifyApi.Services
                 Result<Playlist>.Failure(Error.SongIsNotAdded);
         }
 
-        private Result<PlaylistDto> RemoveSongFromPlaylist(Playlist playlist, int songId, int userId)
+        private async Task<Result<PlaylistDto>> RemoveSongFromPlaylist(Playlist playlist, int songId, int userId)
         {
             try
             {
                 playlist.SongIds.Remove(songId);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 var playlistDto = _playlistService.MapPlaylistEntityToDto(playlist, userId);
 
@@ -106,7 +106,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<PlaylistDto> RemoveSong(int playlistId, int songId, int userId)
+        public async Task<Result<PlaylistDto>> RemoveSong(int playlistId, int songId, int userId)
         {
             var playlistResult = _playlistService.GetPlaylistById(playlistId);
 
@@ -117,9 +117,9 @@ namespace SpotifyApi.Services
 
             var playlist = playlistResult.Value;
 
-            return VerifyUser(playlist, userId)
+            return await VerifyUser(playlist, userId)
                 .Bind(_ => IsSongAdded(playlist, songId))
-                .Bind(_ => RemoveSongFromPlaylist(playlist, songId, userId));
+                .BindAsync(_ => RemoveSongFromPlaylist(playlist, songId, userId));
         }
 
         public ActionResult HandlePlaylistSongsRequestError(Error err)

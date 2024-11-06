@@ -7,14 +7,14 @@ namespace SpotifyApi.Services
     public interface IUserService
     {
         Task<Result<bool>> UserExists(string email, string nickname);
-        Result<User> CreateUser(RegisterUser registerUserDto);
+        Task<Result<User>> CreateUser(RegisterUser registerUserDto);
         Result<User> VerifyUser(LoginUser loginUserDto);
         public Result<User> GetUserByEmail(string email);
         public Result<User> GetUserById(int id);
         Result<User> GetUserByLogin(string login);
-        Result<bool> SavePasswordResetToken(string token, User user);
-        Result<bool> ChangeUserPassword(User user, string token, string password);
-        Result<bool> SaveUserRefreshToken(User user, string refreshToken);
+        Task<Result<bool>> SavePasswordResetToken(string token, User user);
+        Task<Result<bool>> ChangeUserPassword(User user, string token, string password);
+        Task<Result<bool>> SaveUserRefreshTokenAsync(User user, string refreshToken);
     }
 
     public class UserService(
@@ -41,7 +41,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<User> CreateUser(RegisterUser registerUserDto)
+        public async Task<Result<User>> CreateUser(RegisterUser registerUserDto)
         {
             try
             {
@@ -61,8 +61,8 @@ namespace SpotifyApi.Services
                     PasswordResetToken = "",
                 };
 
-                _dbContext.Users.Add(newUser);
-                _dbContext.SaveChanges();
+                await _dbContext.Users.AddAsync(newUser);
+                await _dbContext.SaveChangesAsync();
 
                 return Result<User>.Success(newUser);
             }
@@ -180,12 +180,12 @@ namespace SpotifyApi.Services
             return Result<User>.Success(userResult.Value);
         }
 
-        public Result<bool> SavePasswordResetToken(string token, User user)
+        public async Task<Result<bool>> SavePasswordResetToken(string token, User user)
         {
             try
             {
                 user.PasswordResetToken = token;
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 return Result<bool>.Success(true);
             }
@@ -196,7 +196,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<bool> ChangeUserPassword(User user, string token, string password)
+        public async Task<Result<bool>> ChangeUserPassword(User user, string token, string password)
         {
             var isPasswordUserResetTokenCorrect = user.PasswordResetToken == token;
 
@@ -211,7 +211,7 @@ namespace SpotifyApi.Services
                 user.Password = passwordHash;
                 user.PasswordResetToken = "";
 
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 return Result<bool>.Success(true);
             }
@@ -222,12 +222,12 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<bool> SaveUserRefreshToken(User user, string refreshToken)
+        public async Task<Result<bool>> SaveUserRefreshTokenAsync(User user, string refreshToken)
         {
             try
             {
                 user.RefreshToken = refreshToken;
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 return Result<bool>.Success(true);
             }

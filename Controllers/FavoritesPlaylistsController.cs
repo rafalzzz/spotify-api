@@ -17,7 +17,7 @@ namespace SpotifyApi.Controllers
         private readonly IFavoritePlaylistService _favoritePlaylistServiceService = favoritePlaylistServiceService;
 
         [HttpPatch("{playlistId}")]
-        public IActionResult AddCollaborator([FromRoute] int playlistId)
+        public async Task<ActionResult> AddCollaborator([FromRoute] int playlistId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -26,15 +26,15 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _favoritePlaylistServiceService.AddPlaylistToFavorites(playlistId, int.Parse(userId))
-                .Match(
+            return await _favoritePlaylistServiceService.AddPlaylistToFavorites(playlistId, int.Parse(userId))
+                .MatchAsync(
                     _ => Ok(),
                     _favoritePlaylistServiceService.HandleFavoritePlaylistRequestError
                 );
         }
 
         [HttpDelete("{playlistId}")]
-        public IActionResult RemoveCollaborator([FromRoute] int playlistId)
+        public async Task<ActionResult> RemoveCollaborator([FromRoute] int playlistId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -43,8 +43,8 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _favoritePlaylistServiceService.RemovePlaylistFromFavorites(playlistId, int.Parse(userId))
-                .Match(
+            return await _favoritePlaylistServiceService.RemovePlaylistFromFavorites(playlistId, int.Parse(userId))
+                .MatchAsync(
                     _ => Ok(),
                     _favoritePlaylistServiceService.HandleFavoritePlaylistRequestError
                 );

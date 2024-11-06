@@ -136,7 +136,7 @@ namespace SpotifyApi.Services
                 return Result<bool>.Failure(Error.GeneratePasswordResetTokenError);
             }
 
-            var savePasswordResetTokenResult = _userService.SavePasswordResetToken(token, user);
+            var savePasswordResetTokenResult = await _userService.SavePasswordResetToken(token, user);
 
             if (!savePasswordResetTokenResult.IsSuccess)
             {

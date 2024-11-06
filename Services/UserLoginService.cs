@@ -11,7 +11,7 @@ namespace SpotifyApi.Services
     {
         Result<LoginUser> ValidateLogin(LoginUser registerUserDto);
         Result<User> CheckLoginAndPassword(LoginUser loginUserDto);
-        Result<TokenResult> GenerateTokens(User user);
+        Task<Result<TokenResult>> GenerateTokens(User user);
         ActionResult HandleLoginError(Error err);
     }
 
@@ -47,7 +47,7 @@ namespace SpotifyApi.Services
                 Result<User>.Failure(verifyUserResult.Error);
         }
 
-        public Result<TokenResult> GenerateTokens(User user)
+        public async Task<Result<TokenResult>> GenerateTokens(User user)
         {
             var jwtTokenResult = _accessTokenService.Generate(user);
             var refreshTokenResult = _refreshTokenService.Generate(user);
@@ -57,7 +57,7 @@ namespace SpotifyApi.Services
                 return Result<TokenResult>.Failure(Error.ConfigurationError);
             }
 
-            var saveRefreshTokenResult = _userService.SaveUserRefreshToken(user, refreshTokenResult.Value);
+            var saveRefreshTokenResult = await _userService.SaveUserRefreshTokenAsync(user, refreshTokenResult.Value);
 
             if (!saveRefreshTokenResult.IsSuccess)
             {

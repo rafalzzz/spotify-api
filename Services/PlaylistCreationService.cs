@@ -7,7 +7,7 @@ namespace SpotifyApi.Services
 {
     public interface IPlaylistCreationService
     {
-        Result<PlaylistDto> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
+        Task<Result<PlaylistDto>> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId);
     }
 
     public class PlaylistCreationService(
@@ -31,10 +31,10 @@ namespace SpotifyApi.Services
                 Result<CreatePlaylist>.Failure(validationResult.Error);
         }
 
-        public Result<PlaylistDto> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
+        public async Task<Result<PlaylistDto>> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
         {
-            return ValidatePlaylistCreation(createPlaylistDto)
-            .Bind(createPlaylist => _playlistService.CreatePlaylist(createPlaylist, userId));
+            return await ValidatePlaylistCreation(createPlaylistDto)
+            .BindAsync(createPlaylist => _playlistService.CreatePlaylist(createPlaylist, userId));
         }
     }
 }
