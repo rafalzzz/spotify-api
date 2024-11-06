@@ -17,7 +17,7 @@ namespace SpotifyApi.Controllers
         private readonly IPlaylistCollaboratorService _playlistCollaboratorService = playlistCollaboratorService;
 
         [HttpPatch("{playlistId}/collaborators/{collaboratorId}")]
-        public IActionResult AddCollaborator([FromRoute] int playlistId, [FromRoute] int collaboratorId)
+        public async Task<ActionResult> AddCollaborator([FromRoute] int playlistId, [FromRoute] int collaboratorId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -26,15 +26,15 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _playlistCollaboratorService.AddCollaborator(playlistId, collaboratorId, int.Parse(userId))
-                .Match(
+            return await _playlistCollaboratorService.AddCollaborator(playlistId, collaboratorId, int.Parse(userId))
+                .MatchAsync(
                     _ => Ok(),
                     _playlistCollaboratorService.HandleCollaboratorRequestError
                 );
         }
 
         [HttpDelete("{playlistId}/collaborators/{collaboratorId}")]
-        public IActionResult RemoveCollaborator([FromRoute] int playlistId, [FromRoute] int collaboratorId)
+        public async Task<ActionResult> RemoveCollaborator([FromRoute] int playlistId, [FromRoute] int collaboratorId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -43,8 +43,8 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _playlistCollaboratorService.RemoveCollaborator(playlistId, collaboratorId, int.Parse(userId))
-                .Match(
+            return await _playlistCollaboratorService.RemoveCollaborator(playlistId, collaboratorId, int.Parse(userId))
+                .MatchAsync(
                     _ => NoContent(),
                     _playlistCollaboratorService.HandleCollaboratorRequestError
                 );

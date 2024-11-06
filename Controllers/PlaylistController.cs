@@ -22,7 +22,7 @@ namespace SpotifyApi.Controllers
         private readonly IPlaylistService _playlistService = playlistService;
 
         [HttpPost()]
-        public ActionResult Create([FromBody] CreatePlaylist createPlaylistDto)
+        public async Task<ActionResult> Create([FromBody] CreatePlaylist createPlaylistDto)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -31,15 +31,15 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _playlistCreationService.CreatePlaylist(createPlaylistDto, int.Parse(userId))
-                .Match(
+            return await _playlistCreationService.CreatePlaylist(createPlaylistDto, int.Parse(userId))
+                .MatchAsync(
                     playlist => Created(string.Empty, playlist),
                     _playlistService.HandlePlaylistRequestError
                 );
         }
 
         [HttpPut("{playlistId}")]
-        public IActionResult EditPlaylist([FromRoute] int playlistId, [FromBody] EditPlaylist editPlaylistDto)
+        public async Task<ActionResult> EditPlaylist([FromRoute] int playlistId, [FromBody] EditPlaylist editPlaylistDto)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -48,15 +48,15 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _playlistEditionService.EditPlaylist(playlistId, editPlaylistDto, int.Parse(userId))
-                .Match(
+            return await _playlistEditionService.EditPlaylist(playlistId, editPlaylistDto, int.Parse(userId))
+                .MatchAsync(
                     Ok,
                     _playlistService.HandlePlaylistRequestError
                 );
         }
 
         [HttpDelete("{playlistId}")]
-        public IActionResult DeletePlaylist([FromRoute] int playlistId)
+        public async Task<ActionResult> DeletePlaylist([FromRoute] int playlistId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -65,8 +65,8 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return _playlistService.DeletePlaylist(playlistId, int.Parse(userId))
-            .Match(
+            return await _playlistService.DeletePlaylist(playlistId, int.Parse(userId))
+                .MatchAsync(
                     _ => NoContent(),
                     _playlistService.HandlePlaylistRequestError
                 );

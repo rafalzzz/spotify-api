@@ -18,6 +18,12 @@ namespace SpotifyApi.Utilities
             return result.IsSuccess ? bind(result.Value) : Result<TOut>.Failure(result.Error);
         }
 
+        public static async Task<Result<TOut>> ThenBindAsync<TIn, TOut>(this Task<Result<TIn>> taskResult, Func<TIn, Task<Result<TOut>>> bindAsync)
+        {
+            var result = await taskResult;
+            return result.IsSuccess ? await bindAsync(result.Value) : Result<TOut>.Failure(result.Error);
+        }
+
         public static TOut Match<TIn, TOut>(this Result<TIn> result, Func<TIn, TOut> onSuccess, Func<Error, TOut> onFailure)
         {
             return result.IsSuccess

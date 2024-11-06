@@ -29,7 +29,7 @@ namespace SpotifyApi.Controllers
         {
             return await _userRegistrationService.ValidateRegistration(registerUserDto)
                 .BindAsync(async _ => await _userRegistrationService.CheckIfUserExists(registerUserDto))
-                .ThenBind(_ => _userRegistrationService.CreateUser(registerUserDto))
+                .ThenBindAsync(_ => _userRegistrationService.CreateUser(registerUserDto))
                 .MatchAsync(
                     _ => Ok(),
                     _userRegistrationService.HandleRegistrationError
@@ -37,12 +37,12 @@ namespace SpotifyApi.Controllers
         }
 
         [HttpPost("login")]
-        public ActionResult Login([FromBody] LoginUser loginUserDto)
+        public async Task<ActionResult> Login([FromBody] LoginUser loginUserDto)
         {
-            return _userLoginService.ValidateLogin(loginUserDto)
+            return await _userLoginService.ValidateLogin(loginUserDto)
             .Bind(_userLoginService.CheckLoginAndPassword)
-            .Bind(_userLoginService.GenerateTokens)
-            .Match(
+            .BindAsync(_userLoginService.GenerateTokens)
+            .MatchAsync(
                 tokensResult =>
                 {
                     var accessTokenCookieOptions = _refreshTokenService.GetRefreshTokenCookieOptions();
@@ -67,12 +67,12 @@ namespace SpotifyApi.Controllers
         }
 
         [HttpPatch("password-reset-complete/{token}")]
-        public ActionResult PasswordResetComplete([FromBody] PasswordResetComplete passwordResetCompleteDto, [FromRoute] string token)
+        public async Task<ActionResult> PasswordResetComplete([FromBody] PasswordResetComplete passwordResetCompleteDto, [FromRoute] string token)
         {
-            return _passwordResetCompleteService.ValidatePasswordResetCompleteRequest(passwordResetCompleteDto)
+            return await _passwordResetCompleteService.ValidatePasswordResetCompleteRequest(passwordResetCompleteDto)
                 .Bind(_ => _passwordResetCompleteService.ValidateToken(token))
-                .Bind(user => _userService.ChangeUserPassword(user, token, passwordResetCompleteDto.Password))
-                .Match(
+                .BindAsync(user => _userService.ChangeUserPassword(user, token, passwordResetCompleteDto.Password))
+                .MatchAsync(
                     _ => Ok(),
                     _passwordResetCompleteService.HandlePasswordResetCompleteError
                 );

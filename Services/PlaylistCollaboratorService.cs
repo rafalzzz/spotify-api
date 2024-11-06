@@ -6,8 +6,8 @@ namespace SpotifyApi.Services
 {
     public interface IPlaylistCollaboratorService
     {
-        Result<bool> AddCollaborator(int playlistId, int collaboratorId, int userId);
-        Result<bool> RemoveCollaborator(int playlistId, int collaboratorId, int userId);
+        Task<Result<bool>> AddCollaborator(int playlistId, int collaboratorId, int userId);
+        Task<Result<bool>> RemoveCollaborator(int playlistId, int collaboratorId, int userId);
         ActionResult HandleCollaboratorRequestError(Error err);
     }
 
@@ -44,12 +44,12 @@ namespace SpotifyApi.Services
                 Result<User>.Success(collaborator);
         }
 
-        private Result<bool> AddCollaboratorToPlaylist(Playlist playlist, User collaborator)
+        private async Task<Result<bool>> AddCollaboratorToPlaylist(Playlist playlist, User collaborator)
         {
             try
             {
                 playlist.Collaborators.Add(collaborator);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 return Result<bool>.Success(true);
             }
@@ -60,7 +60,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<bool> AddCollaborator(int playlistId, int collaboratorId, int userId)
+        public async Task<Result<bool>> AddCollaborator(int playlistId, int collaboratorId, int userId)
         {
             var playlistResult = _playlistService.GetPlaylistById(playlistId);
 
@@ -71,10 +71,10 @@ namespace SpotifyApi.Services
 
             var playlist = playlistResult.Value;
 
-            return _playlistService.VerifyPlaylistOwner(playlist, userId)
+            return await _playlistService.VerifyPlaylistOwner(playlist, userId)
                 .Bind(_ => GetCollaboratorById(collaboratorId))
                 .Bind(collaborator => IsCollaboratorNotAdded(playlist, collaborator))
-                .Bind(collaborator => AddCollaboratorToPlaylist(playlist, collaborator));
+                .BindAsync(collaborator => AddCollaboratorToPlaylist(playlist, collaborator));
         }
 
         private static Result<User> IsCollaboratorAdded(Playlist playlist, User collaborator)
@@ -84,12 +84,12 @@ namespace SpotifyApi.Services
                 Result<User>.Failure(Error.UserIsNotAdded);
         }
 
-        private Result<bool> RemoveCollaboratorFromPlaylist(Playlist playlist, User collaborator)
+        private async Task<Result<bool>> RemoveCollaboratorFromPlaylist(Playlist playlist, User collaborator)
         {
             try
             {
                 playlist.Collaborators.Remove(collaborator);
-                _dbContext.SaveChanges();
+                await _dbContext.SaveChangesAsync();
 
                 return Result<bool>.Success(true);
             }
@@ -100,7 +100,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<bool> RemoveCollaborator(int playlistId, int collaboratorId, int userId)
+        public async Task<Result<bool>> RemoveCollaborator(int playlistId, int collaboratorId, int userId)
         {
             var playlistResult = _playlistService.GetPlaylistById(playlistId);
 
@@ -111,10 +111,10 @@ namespace SpotifyApi.Services
 
             var playlist = playlistResult.Value;
 
-            return _playlistService.VerifyPlaylistOwner(playlist, userId)
+            return await _playlistService.VerifyPlaylistOwner(playlist, userId)
                 .Bind(_ => GetCollaboratorById(collaboratorId))
                 .Bind(collaborator => IsCollaboratorAdded(playlist, collaborator))
-                .Bind(collaborator => RemoveCollaboratorFromPlaylist(playlist, collaborator));
+                .BindAsync(collaborator => RemoveCollaboratorFromPlaylist(playlist, collaborator));
         }
 
         public ActionResult HandleCollaboratorRequestError(Error err)
