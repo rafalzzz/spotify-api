@@ -17,7 +17,7 @@ namespace SpotifyApi.Controllers
         private readonly IFavoritePlaylistService _favoritePlaylistServiceService = favoritePlaylistServiceService;
 
         [HttpPatch("{playlistId}")]
-        public async Task<ActionResult> AddCollaborator([FromRoute] int playlistId)
+        public async Task<ActionResult> AddPlaylistToFavorites([FromRoute] int playlistId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -34,7 +34,7 @@ namespace SpotifyApi.Controllers
         }
 
         [HttpDelete("{playlistId}")]
-        public async Task<ActionResult> RemoveCollaborator([FromRoute] int playlistId)
+        public async Task<ActionResult> RemovePlaylistFromFavorites([FromRoute] int playlistId)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
