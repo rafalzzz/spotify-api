@@ -16,30 +16,22 @@ namespace SpotifyApi.Services
         Task<Result<PlaylistDto>> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
         Task<Result<bool>> DeletePlaylist(int playlistId, int userId);
         Result<Playlist> VerifyPlaylistOwner(Playlist playlist, int userId);
-        Task<Result<UserPlaylistDto[]>> GetUserPlaylists(int userId);
         ActionResult HandlePlaylistRequestError(Error err);
     }
 
     public class PlaylistService(
         SpotifyDbContext dbContext,
-        IUserService userService,
         IMapper mapper,
         IErrorHandlingService errorHandlingService
     ) : IPlaylistService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
-        private readonly IUserService _userService = userService;
         private readonly IMapper _mapper = mapper;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         public PlaylistDto MapPlaylistEntityToDto(Playlist playlist, int userId)
         {
             return _mapper.Map<PlaylistDto>(playlist, opts => opts.Items["UserId"] = userId);
-        }
-
-        public UserPlaylistDto MapPlaylistEntityToUserPlaylistDto(Playlist playlist, int userId)
-        {
-            return _mapper.Map<UserPlaylistDto>(playlist, opts => opts.Items["UserId"] = userId);
         }
 
         public async Task<Result<PlaylistDto>> CreatePlaylist(CreatePlaylist createPlaylistDto, int userId)
@@ -140,34 +132,6 @@ namespace SpotifyApi.Services
             .BindAsync(DeletePlaylistFromDb);
         }
 
-        public Result<UserPlaylistDto[]> GetUserPlaylists(User user)
-        {
-
-            var createdAndCollaboratedPlaylists = user.CreatedPlaylists
-                .Union(user.CollaboratingPlaylists);
-
-            var publicFavoritePlaylists = user.FavoritePlaylists
-                .Where(playlist => playlist.IsPublic);
-
-            var playlists = createdAndCollaboratedPlaylists
-                .Union(publicFavoritePlaylists)
-                .Distinct()
-                .ToList();
-
-            var playlistsDto = playlists
-                .Select(playlist => MapPlaylistEntityToUserPlaylistDto(playlist, user.Id))
-                .ToArray();
-
-            return Result<UserPlaylistDto[]>.Success(playlistsDto);
-
-        }
-
-        public async Task<Result<UserPlaylistDto[]>> GetUserPlaylists(int userId)
-        {
-            return await _userService.GetUserWithPlaylistsDataById(userId)
-                .ThenBind(GetUserPlaylists);
-        }
-
         public ActionResult HandlePlaylistRequestError(Error err)
         {
             return err.Type switch
@@ -175,7 +139,6 @@ namespace SpotifyApi.Services
                 ErrorType.Validation => new BadRequestObjectResult(err),
                 ErrorType.WrongPlaylistId => new NotFoundObjectResult(err.Description),
                 ErrorType.Unauthorized => new UnauthorizedObjectResult(err.Description),
-                ErrorType.InvalidToken => new BadRequestObjectResult(err.Description),
                 _ => new ObjectResult("An unexpected error occurred: " + err.Description)
                 {
                     StatusCode = StatusCodes.Status500InternalServerError

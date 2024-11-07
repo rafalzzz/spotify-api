@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using SpotifyApi.Entities;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
@@ -13,7 +12,6 @@ namespace SpotifyApi.Services
         public Result<User> GetUserByEmail(string email);
         public Result<User> GetUserById(int id);
         Result<User> GetUserByLogin(string login);
-        Task<Result<User>> GetUserWithPlaylistsDataById(int id);
         Task<Result<bool>> SavePasswordResetToken(string token, User user);
         Task<Result<bool>> ChangeUserPassword(User user, string token, string password);
         Task<Result<bool>> SaveUserRefreshTokenAsync(User user, string refreshToken);
@@ -156,30 +154,6 @@ namespace SpotifyApi.Services
 
             return userResult.IsSuccess ? Result<User>.Success(userResult.Value!) :
                 Result<User>.Failure(userResult.Error);
-        }
-
-        public async Task<Result<User>> GetUserWithPlaylistsDataById(int id)
-        {
-            try
-            {
-                var user = await _dbContext.Users
-                    .Include(u => u.CreatedPlaylists)
-                    .Include(u => u.CollaboratingPlaylists)
-                    .Include(u => u.FavoritePlaylists)
-                    .FirstOrDefaultAsync(u => u.Id == id);
-
-                if (user is null)
-                {
-                    return Result<User>.Failure(Error.WrongUserId);
-                }
-
-                return Result<User>.Success(user);
-            }
-            catch (Exception exception)
-            {
-                var logErrorAction = "get user with playlists data by id";
-                return _errorHandlingService.HandleDatabaseException<User>(logErrorAction, exception);
-            }
         }
 
         public Result<User> VerifyUser(LoginUser loginUserDto)

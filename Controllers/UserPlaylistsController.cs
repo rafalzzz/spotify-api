@@ -11,10 +11,10 @@ namespace SpotifyApi.Controllers
     [Route(ControllerRoutes.UserPlaylist)]
     [Authorize]
     public class UserPlaylistsController(
-        IPlaylistService playlistService
+        IUserPlaylistsService userPlaylistsService
     ) : ControllerBase
     {
-        private readonly IPlaylistService _playlistService = playlistService;
+        private readonly IUserPlaylistsService _userPlaylistsService = userPlaylistsService;
 
         [HttpGet()]
         public async Task<ActionResult> GetUserPlaylists()
@@ -26,10 +26,10 @@ namespace SpotifyApi.Controllers
                 return Unauthorized();
             }
 
-            return await _playlistService.GetUserPlaylists(int.Parse(userId))
+            return await _userPlaylistsService.GetUserPlaylists(int.Parse(userId))
                 .MatchAsync(
                     Ok,
-                    _playlistService.HandlePlaylistRequestError
+                    _userPlaylistsService.HandleUserPlaylistsRequestError
                 );
 
         }
