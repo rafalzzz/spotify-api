@@ -23,7 +23,7 @@ namespace SpotifyApi.Services
         private readonly IMapper _mapper = mapper;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
-        private UserPlaylistDto MapPlaylistEntityToUserPlaylistDto(Playlist playlist, int userId)
+        private UserPlaylistDto MapPlaylistToUserPlaylistDto(Playlist playlist, int userId)
         {
             return _mapper.Map<UserPlaylistDto>(playlist, opts => opts.Items["UserId"] = userId);
         }
@@ -67,7 +67,7 @@ namespace SpotifyApi.Services
                 .ToList();
 
             var playlistsDto = playlists
-                .Select(playlist => MapPlaylistEntityToUserPlaylistDto(playlist, user.Id))
+                .Select(playlist => MapPlaylistToUserPlaylistDto(playlist, user.Id))
                 .ToArray();
 
             return Result<UserPlaylistDto[]>.Success(playlistsDto);
