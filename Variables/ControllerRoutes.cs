@@ -6,5 +6,6 @@ namespace SpotifyApi.Variables
         public const string Tracks = "/tracks/";
         public const string Playlist = "/playlist/";
         public const string FavoritePlaylist = "/favorite-playlist/";
+        public const string UserPlaylist = "/user-playlists/";
     }
 }
