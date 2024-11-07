@@ -72,23 +72,5 @@ namespace SpotifyApi.Controllers
                 );
 
         }
-
-        [HttpGet("user-playlists")]
-        public async Task<ActionResult> GetUserPlaylists()
-        {
-            var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
-
-            if (userId == null)
-            {
-                return Unauthorized();
-            }
-
-            return await _playlistService.GetUserPlaylists(int.Parse(userId))
-                .MatchAsync(
-                    Ok,
-                    _playlistService.HandlePlaylistRequestError
-                );
-
-        }
     }
 }
