@@ -15,7 +15,7 @@ namespace SpotifyApi.Services
     public interface IPasswordResetCompleteService
     {
         Result<PasswordResetComplete> ValidatePasswordResetCompleteRequest(PasswordResetComplete passwordResetCompleteDto);
-        Result<User> ValidateToken(string token);
+        Task<Result<User>> ValidateToken(string token);
         ActionResult HandlePasswordResetCompleteError(Error error);
     }
 
@@ -90,15 +90,15 @@ namespace SpotifyApi.Services
             return Result<string>.Success(emailClaim.Value);
         }
 
-        public Result<User> ValidateToken(string token)
+        public async Task<Result<User>> ValidateToken(string token)
         {
             var passwordResetSecretKey = GetPasswordResetSecretKey();
             var key = GetSigningCredentialsKey(passwordResetSecretKey);
             var tokenValidationParameters = CreateTokenValidationParameters(key);
 
-            return _jwtService.ValidateJwtToken(token, tokenValidationParameters)
-                .Bind(GetEmailFromJwtToken)
-                .Bind(_userService.GetUserByEmail);
+            return await _jwtService.ValidateJwtToken(token, tokenValidationParameters)
+                .Transform(GetEmailFromJwtToken)
+                .BindAsync(_userService.GetUserByEmail);
         }
 
         public ActionResult HandlePasswordResetCompleteError(Error error)

@@ -13,7 +13,7 @@ namespace SpotifyApi.Services
     public interface IPasswordResetService
     {
         Result<PasswordReset> ValidatePasswordResetRequest(PasswordReset passwordResetDto);
-        Result<User> CheckIfUserExists(PasswordReset passwordResetDto);
+        Task<Result<User>> CheckIfUserExists(PasswordReset passwordResetDto);
         Task<Result<bool>> GenerateAndSendPasswordResetToken(User user);
         public ActionResult HandlePasswordResetError(Error err);
 
@@ -47,9 +47,9 @@ namespace SpotifyApi.Services
                 );
         }
 
-        public Result<User> CheckIfUserExists(PasswordReset passwordResetDto)
+        public async Task<Result<User>> CheckIfUserExists(PasswordReset passwordResetDto)
         {
-            var userResult = _userService.GetUserByLogin(passwordResetDto.Login);
+            var userResult = await _userService.GetUserByLogin(passwordResetDto.Login);
 
             return userResult.IsSuccess ?
                 Result<User>.Success(userResult.Value) :

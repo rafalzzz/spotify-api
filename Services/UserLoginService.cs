@@ -10,7 +10,7 @@ namespace SpotifyApi.Services
     public interface IUserLoginService
     {
         Result<LoginUser> ValidateLogin(LoginUser registerUserDto);
-        Result<User> CheckLoginAndPassword(LoginUser loginUserDto);
+        Task<Result<User>> CheckLoginAndPassword(LoginUser loginUserDto);
         Task<Result<TokenResult>> GenerateTokens(User user);
         ActionResult HandleLoginError(Error err);
     }
@@ -39,9 +39,9 @@ namespace SpotifyApi.Services
                 );
         }
 
-        public Result<User> CheckLoginAndPassword(LoginUser loginUserDto)
+        public async Task<Result<User>> CheckLoginAndPassword(LoginUser loginUserDto)
         {
-            var verifyUserResult = _userService.VerifyUser(loginUserDto);
+            var verifyUserResult = await _userService.VerifyUser(loginUserDto);
 
             return verifyUserResult.IsSuccess ? Result<User>.Success(verifyUserResult.Value) :
                 Result<User>.Failure(verifyUserResult.Error);

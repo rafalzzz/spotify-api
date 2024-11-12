@@ -14,7 +14,7 @@ namespace SpotifyApi.Services
     {
         Result<string> Generate(User user);
         CookieOptions GetRefreshTokenCookieOptions();
-        Result<User> ValidateToken(string token);
+        Task<Result<User>> ValidateToken(string token);
         ActionResult HandleRefreshTokenError(Error error);
 
 
@@ -73,15 +73,15 @@ namespace SpotifyApi.Services
             return _cookiesService.CreateCookieOptions(expires);
         }
 
-        public Result<User> ValidateToken(string token)
+        public async Task<Result<User>> ValidateToken(string token)
         {
             var refreshTokenSecretKey = GetRefreshTokenSecretKey();
             var key = GetSigningCredentialsKey(refreshTokenSecretKey);
             var tokenValidationParameters = CreateTokenValidationParameters(key);
 
-            return _jwtService.ValidateJwtToken(token, tokenValidationParameters)
+            return await _jwtService.ValidateJwtToken(token, tokenValidationParameters)
                 .Bind(GetIdFromJwtToken)
-                .Bind(userId => _userService.GetUserById(int.Parse(userId)));
+                .BindAsync(userId => _userService.GetUserById(int.Parse(userId)));
         }
 
         private static string? GetRefreshTokenSecretKey()

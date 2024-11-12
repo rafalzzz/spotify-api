@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using SpotifyApi.Entities;
 using SpotifyApi.Requests;
 using SpotifyApi.Utilities;
@@ -8,10 +9,10 @@ namespace SpotifyApi.Services
     {
         Task<Result<bool>> UserExists(string email, string nickname);
         Task<Result<User>> CreateUser(RegisterUser registerUserDto);
-        Result<User> VerifyUser(LoginUser loginUserDto);
-        public Result<User> GetUserByEmail(string email);
-        public Result<User> GetUserById(int id);
-        Result<User> GetUserByLogin(string login);
+        Task<Result<User>> VerifyUser(LoginUser loginUserDto);
+        Task<Result<User>> GetUserByEmail(string email);
+        Task<Result<User>> GetUserById(int id);
+        Task<Result<User>> GetUserByLogin(string login);
         Task<Result<bool>> SavePasswordResetToken(string token, User user);
         Task<Result<bool>> ChangeUserPassword(User user, string token, string password);
         Task<Result<bool>> SaveUserRefreshTokenAsync(User user, string refreshToken);
@@ -73,11 +74,11 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<User> GetUserByEmail(string email)
+        public async Task<Result<User>> GetUserByEmail(string email)
         {
             try
             {
-                User? user = _dbContext.Users.FirstOrDefault(user => user.Email == email);
+                User? user = await _dbContext.Users.FirstOrDefaultAsync(user => user.Email == email);
 
                 if (user is null)
                 {
@@ -93,11 +94,11 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<User> GetUserById(int id)
+        public async Task<Result<User>> GetUserById(int id)
         {
             try
             {
-                User? user = _dbContext.Users.FirstOrDefault(user => user.Id == id);
+                User? user = await _dbContext.Users.FirstOrDefaultAsync(user => user.Id == id);
 
                 if (user is null)
                 {
@@ -113,11 +114,11 @@ namespace SpotifyApi.Services
             }
         }
 
-        private Result<User> GetUserByNickname(string nickname)
+        private async Task<Result<User>> GetUserByNickname(string nickname)
         {
             try
             {
-                User? user = _dbContext.Users.FirstOrDefault(user => user.Nickname == nickname);
+                User? user = await _dbContext.Users.FirstOrDefaultAsync(user => user.Nickname == nickname);
 
                 if (user is null)
                 {
@@ -148,17 +149,17 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<User> GetUserByLogin(string login)
+        public async Task<Result<User>> GetUserByLogin(string login)
         {
-            var userResult = login.Contains('@') ? GetUserByEmail(login) : GetUserByNickname(login);
+            var userResult = login.Contains('@') ? await GetUserByEmail(login) : await GetUserByNickname(login);
 
             return userResult.IsSuccess ? Result<User>.Success(userResult.Value!) :
                 Result<User>.Failure(userResult.Error);
         }
 
-        public Result<User> VerifyUser(LoginUser loginUserDto)
+        public async Task<Result<User>> VerifyUser(LoginUser loginUserDto)
         {
-            var userResult = GetUserByLogin(loginUserDto.Login);
+            var userResult = await GetUserByLogin(loginUserDto.Login);
 
             if (!userResult.IsSuccess)
             {

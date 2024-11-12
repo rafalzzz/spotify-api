@@ -36,5 +36,10 @@ namespace SpotifyApi.Utilities
             var result = await taskResult;
             return result.IsSuccess ? onSuccess(result.Value) : onFailure(result.Error);
         }
+
+        public static Result<TOut> Transform<TIn, TOut>(this Result<TIn> result, Func<TIn, Result<TOut>> bind)
+        {
+            return result.IsSuccess ? bind(result.Value) : Result<TOut>.Failure(result.Error);
+        }
     }
 }
