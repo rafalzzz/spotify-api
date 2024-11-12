@@ -22,9 +22,9 @@ namespace SpotifyApi.Services
         private readonly IPlaylistService _playlistService = playlistService;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
-        private Result<Playlist> GetFavoritePlaylistById(int id)
+        private async Task<Result<Playlist>> GetFavoritePlaylistById(int id)
         {
-            var playlistResult = _playlistService.GetPlaylistById(id);
+            var playlistResult = await _playlistService.GetPlaylistById(id);
 
             if (playlistResult.IsSuccess)
             {
@@ -41,13 +41,13 @@ namespace SpotifyApi.Services
             return Result<Playlist>.Failure(playlistResult.Error);
         }
 
-        public Result<User> GetUserById(int id)
+        private async Task<Result<User>> GetUserById(int id)
         {
             try
             {
-                User? user = _dbContext.Users
+                User? user = await _dbContext.Users
                     .Include(u => u.FavoritePlaylists)
-                    .FirstOrDefault(user => user.Id == id);
+                    .FirstOrDefaultAsync(user => user.Id == id);
 
                 if (user is null)
                 {
@@ -100,7 +100,7 @@ namespace SpotifyApi.Services
 
         public async Task<Result<bool>> AddPlaylistToFavorites(int playlistId, int userId)
         {
-            var playlistResult = GetFavoritePlaylistById(playlistId);
+            var playlistResult = await GetFavoritePlaylistById(playlistId);
 
             if (!playlistResult.IsSuccess)
             {
@@ -110,8 +110,8 @@ namespace SpotifyApi.Services
             var playlist = playlistResult.Value;
 
             return await GetUserById(userId)
-                .Bind(user => CheckIfUserIsOwnerOrCollaborator(user, playlist))
-                .BindAsync(user => AddToFavorites(user, playlist));
+                .ThenBind(user => CheckIfUserIsOwnerOrCollaborator(user, playlist))
+                .ThenBindAsync(user => AddToFavorites(user, playlist));
         }
 
         private async Task<Result<bool>> RemoveFromFavorites(User user, Playlist playlist)
@@ -137,7 +137,7 @@ namespace SpotifyApi.Services
 
         public async Task<Result<bool>> RemovePlaylistFromFavorites(int playlistId, int userId)
         {
-            var playlistResult = GetFavoritePlaylistById(playlistId);
+            var playlistResult = await GetFavoritePlaylistById(playlistId);
 
             if (!playlistResult.IsSuccess)
             {
@@ -147,7 +147,7 @@ namespace SpotifyApi.Services
             var playlist = playlistResult.Value;
 
             return await GetUserById(userId)
-                .BindAsync(user => RemoveFromFavorites(user, playlist));
+                .ThenBindAsync(user => RemoveFromFavorites(user, playlist));
         }
 
         public ActionResult HandleFavoritePlaylistRequestError(Error err)

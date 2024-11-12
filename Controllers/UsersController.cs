@@ -40,8 +40,8 @@ namespace SpotifyApi.Controllers
         public async Task<ActionResult> Login([FromBody] LoginUser loginUserDto)
         {
             return await _userLoginService.ValidateLogin(loginUserDto)
-            .Bind(_userLoginService.CheckLoginAndPassword)
-            .BindAsync(_userLoginService.GenerateTokens)
+            .BindAsync(_userLoginService.CheckLoginAndPassword)
+            .ThenBindAsync(_userLoginService.GenerateTokens)
             .MatchAsync(
                 tokensResult =>
                 {
@@ -58,8 +58,8 @@ namespace SpotifyApi.Controllers
         public async Task<ActionResult> PasswordReset([FromBody] PasswordReset passwordResetDto)
         {
             return await _passwordResetService.ValidatePasswordResetRequest(passwordResetDto)
-                .Bind(_passwordResetService.CheckIfUserExists)
-                .BindAsync(_passwordResetService.GenerateAndSendPasswordResetToken)
+                .BindAsync(_passwordResetService.CheckIfUserExists)
+                .ThenBindAsync(_passwordResetService.GenerateAndSendPasswordResetToken)
                 .MatchAsync(
                     _ => Ok(),
                     _passwordResetService.HandlePasswordResetError
@@ -70,8 +70,8 @@ namespace SpotifyApi.Controllers
         public async Task<ActionResult> PasswordResetComplete([FromBody] PasswordResetComplete passwordResetCompleteDto, [FromRoute] string token)
         {
             return await _passwordResetCompleteService.ValidatePasswordResetCompleteRequest(passwordResetCompleteDto)
-                .Bind(_ => _passwordResetCompleteService.ValidateToken(token))
-                .BindAsync(user => _userService.ChangeUserPassword(user, token, passwordResetCompleteDto.Password))
+                .BindAsync(_ => _passwordResetCompleteService.ValidateToken(token))
+                .ThenBindAsync(user => _userService.ChangeUserPassword(user, token, passwordResetCompleteDto.Password))
                 .MatchAsync(
                     _ => Ok(),
                     _passwordResetCompleteService.HandlePasswordResetCompleteError
@@ -79,11 +79,11 @@ namespace SpotifyApi.Controllers
         }
 
         [HttpGet("refresh-token/{token}")]
-        public ActionResult RefreshAccessToken([FromRoute] string token)
+        public async Task<ActionResult> RefreshAccessToken([FromRoute] string token)
         {
-            return _refreshTokenService.ValidateToken(token)
-                .Bind(_refreshTokenService.Generate)
-                .Match(
+            return await _refreshTokenService.ValidateToken(token)
+                .ThenBind(_refreshTokenService.Generate)
+                .MatchAsync(
                     Ok,
                     _refreshTokenService.HandleRefreshTokenError
                 );

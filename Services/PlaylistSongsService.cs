@@ -67,7 +67,7 @@ namespace SpotifyApi.Services
 
         public async Task<Result<PlaylistDto>> AddSong(int playlistId, int songId, int userId)
         {
-            var playlistResult = _playlistService.GetPlaylistById(playlistId);
+            var playlistResult = await _playlistService.GetPlaylistById(playlistId);
 
             if (!playlistResult.IsSuccess)
             {
@@ -108,7 +108,7 @@ namespace SpotifyApi.Services
 
         public async Task<Result<PlaylistDto>> RemoveSong(int playlistId, int songId, int userId)
         {
-            var playlistResult = _playlistService.GetPlaylistById(playlistId);
+            var playlistResult = await _playlistService.GetPlaylistById(playlistId);
 
             if (!playlistResult.IsSuccess)
             {
