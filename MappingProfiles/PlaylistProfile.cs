@@ -25,6 +25,8 @@ namespace SpotifyApi.MappingProfiles
                     src.OwnerId == (int)context.Items["UserId"]))
                 .ForMember(dest => dest.IsCollaborator, opt => opt.MapFrom((src, dest, destMember, context) =>
                     src.Collaborators.Any(c => c.Id == (int)context.Items["UserId"])))
+                .ForMember(dest => dest.IsFavorite, opt => opt.MapFrom((src, dest, destMember, context) =>
+                    src.FavoritedByUsers.Any(f => f.Id == (int)context.Items["UserId"])))
                 .ForMember(dest => dest.SongIds, opt => opt.MapFrom(src => src.SongIds));
         }
     }

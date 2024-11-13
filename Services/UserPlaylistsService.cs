@@ -54,15 +54,9 @@ namespace SpotifyApi.Services
 
         public Result<UserPlaylistDto[]> GetUserPlaylists(User user)
         {
-
-            var createdAndCollaboratedPlaylists = user.CreatedPlaylists
-                .Union(user.CollaboratingPlaylists);
-
-            var publicFavoritePlaylists = user.FavoritePlaylists
-                .Where(playlist => playlist.IsPublic);
-
-            var playlists = createdAndCollaboratedPlaylists
-                .Union(publicFavoritePlaylists)
+            var playlists = user.CreatedPlaylists
+                .Union(user.CollaboratingPlaylists)
+                .Union(user.FavoritePlaylists.Where(playlist => playlist.IsPublic))
                 .Distinct()
                 .ToList();
 
@@ -71,7 +65,6 @@ namespace SpotifyApi.Services
                 .ToArray();
 
             return Result<UserPlaylistDto[]>.Success(playlistsDto);
-
         }
 
         public async Task<Result<UserPlaylistDto[]>> GetUserPlaylists(int userId)
