@@ -1,4 +1,3 @@
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpotifyApi.Entities;
@@ -9,24 +8,19 @@ namespace SpotifyApi.Services
 {
     public interface IUserPlaylistsService
     {
-        Task<Result<UserPlaylistDto[]>> GetUserPlaylists(int userId);
+        Task<Result<PlaylistDto[]>> GetUserPlaylists(int userId);
         ActionResult HandleUserPlaylistsRequestError(Error err);
     }
 
     public class UserPlaylistsService(
         SpotifyDbContext dbContext,
-        IMapper mapper,
+        IPlaylistService playlistService,
         IErrorHandlingService errorHandlingService
     ) : IUserPlaylistsService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
-        private readonly IMapper _mapper = mapper;
+        private readonly IPlaylistService _playlistService = playlistService;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
-
-        private UserPlaylistDto MapPlaylistToUserPlaylistDto(Playlist playlist, int userId)
-        {
-            return _mapper.Map<UserPlaylistDto>(playlist, opts => opts.Items["UserId"] = userId);
-        }
 
         private async Task<Result<User>> GetUserWithPlaylistsDataById(int id)
         {
@@ -52,7 +46,7 @@ namespace SpotifyApi.Services
             }
         }
 
-        public Result<UserPlaylistDto[]> GetUserPlaylists(User user)
+        public Result<PlaylistDto[]> GetUserPlaylists(User user)
         {
             var playlists = user.CreatedPlaylists
                 .Union(user.CollaboratingPlaylists)
@@ -61,13 +55,13 @@ namespace SpotifyApi.Services
                 .ToList();
 
             var playlistsDto = playlists
-                .Select(playlist => MapPlaylistToUserPlaylistDto(playlist, user.Id))
+                .Select(playlist => _playlistService.MapPlaylistEntityToDto(playlist, user.Id))
                 .ToArray();
 
-            return Result<UserPlaylistDto[]>.Success(playlistsDto);
+            return Result<PlaylistDto[]>.Success(playlistsDto);
         }
 
-        public async Task<Result<UserPlaylistDto[]>> GetUserPlaylists(int userId)
+        public async Task<Result<PlaylistDto[]>> GetUserPlaylists(int userId)
         {
             return await GetUserWithPlaylistsDataById(userId)
                 .ThenBind(GetUserPlaylists);

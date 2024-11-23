@@ -60,6 +60,7 @@ namespace SpotifyApi.Services
             {
                 var playlist = await _dbContext.Playlists
                     .Include(playlist => playlist.Collaborators)
+                    .Include(playlist => playlist.FavoritedByUsers)
                     .FirstOrDefaultAsync(playlist => playlist.Id == id);
 
                 if (playlist is null)
