@@ -72,5 +72,23 @@ namespace SpotifyApi.Controllers
                 );
 
         }
+
+        [HttpGet("{playlistId}")]
+        public async Task<ActionResult> GetPlaylist([FromRoute] int playlistId)
+        {
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            return await _playlistService.GetPlaylistWithSongs(playlistId, int.Parse(userId))
+                .MatchAsync(
+                    Ok,
+                    _playlistService.HandlePlaylistRequestError
+                );
+
+        }
     }
 }

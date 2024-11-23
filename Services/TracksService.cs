@@ -10,6 +10,7 @@ namespace SpotifyApi.Services
     {
         Result<SearchTracksParams> ValidateTracksRequestLogin(SearchTracksParams requestParams);
         Task<Result<IEnumerable<Track>>> GetTracksFromItunesApi(SearchTracksParams validParams);
+        Task<Result<IEnumerable<Track>>> GetTracksByIds(IEnumerable<int> songIds);
     }
 
     public class TracksService(
@@ -42,9 +43,21 @@ namespace SpotifyApi.Services
 
         public async Task<Result<IEnumerable<Track>>> GetTracksFromItunesApi(SearchTracksParams validParams)
         {
+            var url = $"{_serviceSettings.ItunesApi}/search?term={validParams.Term}&entity={validParams.Entity}&limit={validParams.Limit}&offset={validParams.Offset}";
+            return await FetchTracksFromApi(url, "get tracks from iTunes API");
+        }
+
+        public async Task<Result<IEnumerable<Track>>> GetTracksByIds(IEnumerable<int> songIds)
+        {
+            var idsQuery = string.Join(",", songIds);
+            var url = $"{_serviceSettings.ItunesApi}/lookup?id={idsQuery}";
+            return await FetchTracksFromApi(url, "get tracks by IDs from iTunes API");
+        }
+
+        private async Task<Result<IEnumerable<Track>>> FetchTracksFromApi(string url, string logErrorAction)
+        {
             try
             {
-                var url = $"{_serviceSettings.ItunesApi}/search?term={validParams.Term}&entity={validParams.Entity}&limit={validParams.Limit}&offset={validParams.Offset}";
                 var response = await _httpClient.GetAsync(url);
 
                 if (!response.IsSuccessStatusCode)
@@ -68,14 +81,11 @@ namespace SpotifyApi.Services
             }
             catch (Exception exception)
             {
-                var logErrorAction = "get tracks from iTunes API";
-                var initialErrorMessage = "iTunes API";
-
                 var error = _errorHandlingService.HandleError(
                     exception,
                     ErrorType.ApiItunes,
                     logErrorAction,
-                    initialErrorMessage
+                    "iTunes API"
                 );
 
                 return Result<IEnumerable<Track>>.Failure(error);
