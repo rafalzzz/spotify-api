@@ -81,11 +81,13 @@ namespace SpotifyApi.Services
             }
             catch (Exception exception)
             {
+                var initialErrorMessage = "iTunes API";
+
                 var error = _errorHandlingService.HandleError(
                     exception,
                     ErrorType.ApiItunes,
                     logErrorAction,
-                    "iTunes API"
+                    initialErrorMessage
                 );
 
                 return Result<IEnumerable<Track>>.Failure(error);
