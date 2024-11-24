@@ -1,4 +1,4 @@
-This API is basic and serves as a foundation for further development. The primary goal was to showcase my expertise in building robust systems with ASP.NET.
+This API is basic and serves as a foundation for further development. The primary goal was to showcase my expertise in building robust systems with ASP.NET. Of course, for optimization purposes, throttling could be added to individual endpoints, as well as features like an endpoint responsible for fetching songs based on a submitted array of song IDs, etc.
 
 ## Getting Started
 Clone the project to your local machine using the following command:
@@ -47,6 +47,7 @@ The ASP.NET Core backend includes the following features:
 - User registration and login
 - Password reset via email (sends a reset link)
 - Token-based authentication (access and refresh tokens)
+- Authorization
 - Fetching songs from the iTunes API
 - Creating playlists
 - Editing playlists (name, description, privacy settings)
