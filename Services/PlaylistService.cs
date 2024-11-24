@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SpotifyApi.Classes;
 using SpotifyApi.Entities;
 using SpotifyApi.Responses;
 using SpotifyApi.Requests;
@@ -15,6 +16,7 @@ namespace SpotifyApi.Services
         Task<Result<Playlist>> GetPlaylistById(int id);
         Task<Result<PlaylistDto>> EditPlaylist(int playlistId, EditPlaylist editPlaylistDto, int userId);
         Task<Result<bool>> DeletePlaylist(int playlistId, int userId);
+        Task<Result<PlaylistWithSongsDto>> GetPlaylistWithSongs(int playlistId, int userId);
         Result<Playlist> VerifyPlaylistOwner(Playlist playlist, int userId);
         ActionResult HandlePlaylistRequestError(Error err);
     }
@@ -22,11 +24,13 @@ namespace SpotifyApi.Services
     public class PlaylistService(
         SpotifyDbContext dbContext,
         IMapper mapper,
+        ITracksService tracksService,
         IErrorHandlingService errorHandlingService
     ) : IPlaylistService
     {
         private readonly SpotifyDbContext _dbContext = dbContext;
         private readonly IMapper _mapper = mapper;
+        private readonly ITracksService _tracksService = tracksService;
         private readonly IErrorHandlingService _errorHandlingService = errorHandlingService;
 
         public PlaylistDto MapPlaylistEntityToDto(Playlist playlist, int userId)
@@ -60,6 +64,7 @@ namespace SpotifyApi.Services
             {
                 var playlist = await _dbContext.Playlists
                     .Include(playlist => playlist.Collaborators)
+                    .Include(playlist => playlist.FavoritedByUsers)
                     .FirstOrDefaultAsync(playlist => playlist.Id == id);
 
                 if (playlist is null)
@@ -130,6 +135,32 @@ namespace SpotifyApi.Services
             return await GetPlaylistById(playlistId)
             .ThenBind(playlist => VerifyPlaylistOwner(playlist, userId))
             .ThenBindAsync(DeletePlaylistFromDb);
+        }
+
+        private async Task<Result<PlaylistWithSongsDto>> AddSongsToPlaylist(Playlist playlist, int userId)
+        {
+            var tracksResult = await _tracksService.GetTracksByIds(playlist.SongIds);
+
+            if (!tracksResult.IsSuccess)
+            {
+                return Result<PlaylistWithSongsDto>.Failure(tracksResult.Error);
+            }
+
+            var tracks = tracksResult.Value.ToList();
+
+            var playlistDto = _mapper.Map<PlaylistWithSongsDto>(playlist, opts =>
+                {
+                    opts.Items["UserId"] = userId;
+                    opts.Items["Tracks"] = tracks;
+                });
+
+            return Result<PlaylistWithSongsDto>.Success(playlistDto);
+        }
+
+        public async Task<Result<PlaylistWithSongsDto>> GetPlaylistWithSongs(int playlistId, int userId)
+        {
+            return await GetPlaylistById(playlistId)
+                .ThenBindAsync(playlist => AddSongsToPlaylist(playlist, userId));
         }
 
         public ActionResult HandlePlaylistRequestError(Error err)

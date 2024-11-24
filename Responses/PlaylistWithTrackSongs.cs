@@ -1,6 +1,8 @@
+using SpotifyApi.Classes;
+
 namespace SpotifyApi.Responses
 {
-    public class UserPlaylistDto
+    public class PlaylistWithSongsDto
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;
@@ -8,6 +10,7 @@ namespace SpotifyApi.Responses
         public bool IsPublic { get; set; }
         public bool IsOwner { get; set; }
         public bool IsCollaborator { get; set; }
-        public List<int> SongIds { get; set; } = [];
+        public bool IsFavorite { get; set; }
+        public List<Track> Songs { get; set; } = [];
     }
 }
