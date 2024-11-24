@@ -22,7 +22,7 @@ namespace SpotifyApi.Controllers
         private readonly IPlaylistService _playlistService = playlistService;
 
         [HttpPost()]
-        public async Task<ActionResult> Create([FromBody] CreatePlaylist createPlaylistDto)
+        public async Task<ActionResult> CreatePlaylist([FromBody] CreatePlaylist createPlaylistDto)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
@@ -68,6 +68,24 @@ namespace SpotifyApi.Controllers
             return await _playlistService.DeletePlaylist(playlistId, int.Parse(userId))
                 .MatchAsync(
                     _ => NoContent(),
+                    _playlistService.HandlePlaylistRequestError
+                );
+
+        }
+
+        [HttpGet("{playlistId}")]
+        public async Task<ActionResult> GetPlaylist([FromRoute] int playlistId)
+        {
+            var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            return await _playlistService.GetPlaylistWithSongs(playlistId, int.Parse(userId))
+                .MatchAsync(
+                    Ok,
                     _playlistService.HandlePlaylistRequestError
                 );
 
