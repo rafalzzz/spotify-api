@@ -22,7 +22,7 @@ namespace SpotifyApi.Controllers
         private readonly IPlaylistService _playlistService = playlistService;
 
         [HttpPost()]
-        public async Task<ActionResult> Create([FromBody] CreatePlaylist createPlaylistDto)
+        public async Task<ActionResult> CreatePlaylist([FromBody] CreatePlaylist createPlaylistDto)
         {
             var userId = User.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
 
